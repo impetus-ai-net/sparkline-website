@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/weekly-digest",
-      "schedule": "0 14 * * MON"
+      "schedule": "0 14 * * 1"
     }
   ]
 }
