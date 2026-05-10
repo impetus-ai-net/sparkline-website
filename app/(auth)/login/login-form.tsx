@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
@@ -12,7 +11,6 @@ export function LoginForm({
   next?: string;
   initialError?: string;
 }) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | undefined>(initialError);
@@ -29,8 +27,10 @@ export function LoginForm({
       setLoading(false);
       return;
     }
-    router.push(next || "/dashboard");
-    router.refresh();
+    // Hard reload so the freshly-set Supabase auth cookies are sent on
+    // the next request (router.push can race with cookie propagation
+    // and bounce the user back to /login).
+    window.location.assign(next || "/dashboard");
   }
 
   return (

@@ -8,11 +8,18 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const profile = await getProfile();
-  if (!profile) redirect("/login?next=/dashboard");
+
+  // Middleware already gates /dashboard for unauthenticated users.
+  // getProfile() self-heals a missing profile row and falls back to a
+  // synthesized profile if the DB is unreachable, so this is mostly
+  // defensive — it should never hit.
+  if (!profile) redirect("/login");
+
+  const isAdmin = profile.role === "admin" || profile.role === "teacher";
 
   return (
     <div className="flex min-h-screen bg-black text-white">
-      <StudentSidebar isAdmin={profile.role === "admin" || profile.role === "teacher"} />
+      <StudentSidebar isAdmin={isAdmin} />
       <main className="flex-1 px-6 py-8 md:px-10 md:py-10">{children}</main>
     </div>
   );

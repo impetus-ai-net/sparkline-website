@@ -1,12 +1,10 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
@@ -22,8 +20,7 @@ export default function ResetPasswordPage() {
       setLoading(false);
       return;
     }
-    router.push("/dashboard");
-    router.refresh();
+    window.location.assign("/dashboard");
   }
 
   return (

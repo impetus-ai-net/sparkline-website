@@ -62,7 +62,7 @@ where not exists (select 1 from public.cohorts);
 -- ----------------------------------------------------------------------------
 create table if not exists public.applications (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
   cohort_id uuid references public.cohorts(id) on delete set null,
   status text not null default 'draft' check (status in ('draft','submitted','accepted','rejected','paid','enrolled','withdrawn')),
   -- Application fields
@@ -99,7 +99,7 @@ create index if not exists applications_status_idx on public.applications(status
 -- ----------------------------------------------------------------------------
 create table if not exists public.enrollments (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
   cohort_id uuid not null references public.cohorts(id) on delete cascade,
   application_id uuid references public.applications(id) on delete set null,
   enrolled_at timestamptz not null default now(),
@@ -138,7 +138,7 @@ create index if not exists lessons_module_id_idx on public.lessons(module_id);
 -- lesson_progress: per-user watch tracking
 -- ----------------------------------------------------------------------------
 create table if not exists public.lesson_progress (
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
   lesson_id uuid not null references public.lessons(id) on delete cascade,
   watched_seconds integer not null default 0,
   completed_at timestamptz,
@@ -151,7 +151,7 @@ create table if not exists public.lesson_progress (
 -- ----------------------------------------------------------------------------
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
   application_id uuid references public.applications(id) on delete set null,
   cohort_id uuid references public.cohorts(id) on delete set null,
   stripe_session_id text,

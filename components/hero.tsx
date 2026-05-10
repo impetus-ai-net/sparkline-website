@@ -84,7 +84,7 @@ export default function Hero() {
           transition={{ delay: 0.85, duration: 0.7 }}
           className="mt-16 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-xs uppercase tracking-[0.18em] text-white/40"
         >
-          <span>Ages 12–18</span>
+          <span>Ages 13–18</span>
           <span className="h-1 w-1 rounded-full bg-white/20" />
           <span>4 Weeks · Fully Virtual</span>
           <span className="h-1 w-1 rounded-full bg-white/20" />

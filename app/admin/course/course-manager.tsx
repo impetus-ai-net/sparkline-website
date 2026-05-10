@@ -3,7 +3,18 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea, Label, Select } from "@/components/ui/input";
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  Upload,
+  X,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import {
   saveModule,
   deleteModule,
@@ -12,6 +23,7 @@ import {
   type ModuleInput,
   type LessonInput,
 } from "./actions";
+import { getUploadToken } from "./upload-actions";
 
 type Cohort = { id: string; name: string };
 type ModuleRow = ModuleInput & { id: string };
@@ -101,10 +113,13 @@ export function CourseManager({
   }
 
   if (editingLesson) {
+    const ownerModule = modules.find((m) => m.id === editingLesson.module_id);
     return (
       <LessonForm
         modules={modules}
+        cohorts={cohorts}
         initial={editingLesson}
+        ownerModule={ownerModule}
         onCancel={() => setEditingLesson(null)}
         onSave={onSaveLesson}
         pending={pending}
@@ -170,12 +185,14 @@ export function CourseManager({
                   <button
                     onClick={() => setEditingModule(m)}
                     className="p-1.5 text-white/50 hover:text-white"
+                    aria-label="Edit module"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => onDeleteModule(m.id)}
                     className="p-1.5 text-white/50 hover:text-red-400"
+                    aria-label="Delete module"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -214,22 +231,24 @@ export function CourseManager({
                           <div>
                             <div className="text-sm text-white">{l.title}</div>
                             <div className="text-xs text-white/40">
-                              {l.video_path || l.video_url || "no video"} ·{" "}
+                              {l.video_path || l.video_url || "no video"}
                               {l.duration_seconds
-                                ? `${Math.round(l.duration_seconds / 60)} min`
-                                : "—"}
+                                ? ` · ${Math.round(l.duration_seconds / 60)} min`
+                                : ""}
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => setEditingLesson(l)}
                               className="p-1.5 text-white/50 hover:text-white"
+                              aria-label="Edit lesson"
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => onDeleteLesson(l.id)}
                               className="p-1.5 text-white/50 hover:text-red-400"
+                              aria-label="Delete lesson"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -273,7 +292,9 @@ function ModuleForm({
       }}
       className="space-y-4"
     >
-      <h3 className="text-lg font-semibold">{initial.id ? "Edit module" : "New module"}</h3>
+      <h3 className="text-lg font-semibold">
+        {initial.id ? "Edit module" : "New module"}
+      </h3>
       <div>
         <Label>Cohort</Label>
         <Select
@@ -295,7 +316,9 @@ function ModuleForm({
             type="number"
             min={1}
             value={m.week}
-            onChange={(e) => setM({ ...m, week: parseInt(e.target.value) || 1 })}
+            onChange={(e) =>
+              setM({ ...m, week: parseInt(e.target.value) || 1 })
+            }
           />
         </div>
         <div>
@@ -303,7 +326,9 @@ function ModuleForm({
           <Input
             type="number"
             value={m.position}
-            onChange={(e) => setM({ ...m, position: parseInt(e.target.value) || 0 })}
+            onChange={(e) =>
+              setM({ ...m, position: parseInt(e.target.value) || 0 })
+            }
           />
         </div>
       </div>
@@ -338,41 +363,46 @@ function ModuleForm({
 
 function LessonForm({
   modules,
+  cohorts,
   initial,
+  ownerModule,
   onCancel,
   onSave,
   pending,
   error,
 }: {
   modules: ModuleRow[];
+  cohorts: Cohort[];
   initial: LessonInput;
+  ownerModule?: ModuleRow;
   onCancel: () => void;
   onSave: (l: LessonInput) => void;
   pending: boolean;
   error?: string;
 }) {
   const [l, setL] = useState<LessonInput>(initial);
-  const [materialsText, setMaterialsText] = useState(
-    JSON.stringify(initial.materials ?? [], null, 2),
+  const [materials, setMaterials] = useState<{ title: string; path: string }[]>(
+    initial.materials ?? [],
   );
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    let materials: { title: string; path: string }[] = [];
-    try {
-      materials = JSON.parse(materialsText || "[]");
-    } catch {
-      alert("Materials JSON is invalid.");
-      return;
-    }
     onSave({ ...l, materials });
   }
 
+  // Folder used for uploaded files: cohortname/weekN
+  const m = modules.find((x) => x.id === l.module_id) ?? ownerModule;
+  const cohort = cohorts.find((c) => c.id === m?.cohort_id);
+  const folder = m
+    ? `${cohort?.name ?? "cohort"}/week${m.week}`
+    : "misc";
+
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-5">
       <h3 className="text-lg font-semibold">
         {initial.id ? "Edit lesson" : "New lesson"}
       </h3>
+
       <div>
         <Label>Module</Label>
         <Select
@@ -387,6 +417,7 @@ function LessonForm({
           ))}
         </Select>
       </div>
+
       <div>
         <Label>Title</Label>
         <Input
@@ -395,6 +426,7 @@ function LessonForm({
           onChange={(e) => setL({ ...l, title: e.target.value })}
         />
       </div>
+
       <div>
         <Label>Description</Label>
         <Textarea
@@ -403,26 +435,45 @@ function LessonForm({
           onChange={(e) => setL({ ...l, description: e.target.value })}
         />
       </div>
-      <div>
-        <Label>Video path (in 'course-videos' bucket)</Label>
-        <Input
-          placeholder="e.g. week1/intro.mp4"
-          value={l.video_path ?? ""}
-          onChange={(e) => setL({ ...l, video_path: e.target.value })}
-        />
-        <p className="mt-1 text-xs text-white/40">
-          Upload via the Supabase Storage UI, then paste the path here. Or use an external URL below.
-        </p>
+
+      {/* Video upload */}
+      <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <Label className="!mb-0">Video</Label>
+          {l.video_path && (
+            <button
+              type="button"
+              className="text-xs text-white/40 hover:text-red-400"
+              onClick={() => setL({ ...l, video_path: "" })}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        {l.video_path ? (
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-xs text-white/70">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <span className="font-mono">{l.video_path}</span>
+          </div>
+        ) : (
+          <FileUploader
+            bucket="course-videos"
+            folder={folder}
+            accept="video/*"
+            onUploaded={(path) => setL({ ...l, video_path: path })}
+          />
+        )}
+        <div className="mt-3">
+          <Label>Or paste an external URL</Label>
+          <Input
+            type="url"
+            placeholder="https://..."
+            value={l.video_url ?? ""}
+            onChange={(e) => setL({ ...l, video_url: e.target.value })}
+          />
+        </div>
       </div>
-      <div>
-        <Label>Or external video URL</Label>
-        <Input
-          type="url"
-          placeholder="https://..."
-          value={l.video_url ?? ""}
-          onChange={(e) => setL({ ...l, video_url: e.target.value })}
-        />
-      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label>Duration (seconds)</Label>
@@ -431,7 +482,10 @@ function LessonForm({
             min={0}
             value={l.duration_seconds ?? 0}
             onChange={(e) =>
-              setL({ ...l, duration_seconds: parseInt(e.target.value) || 0 })
+              setL({
+                ...l,
+                duration_seconds: parseInt(e.target.value) || 0,
+              })
             }
           />
         </div>
@@ -446,19 +500,62 @@ function LessonForm({
           />
         </div>
       </div>
-      <div>
-        <Label>Materials (JSON array)</Label>
-        <Textarea
-          rows={4}
-          className="font-mono text-xs"
-          value={materialsText}
-          onChange={(e) => setMaterialsText(e.target.value)}
-          placeholder='[{"title": "Slides", "path": "week1/slides.pdf"}]'
+
+      {/* Materials */}
+      <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <Label className="!mb-0">Materials</Label>
+        </div>
+        {materials.length === 0 ? (
+          <p className="mb-3 text-xs text-white/40">No materials yet.</p>
+        ) : (
+          <ul className="mb-3 space-y-2">
+            {materials.map((mat, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 px-3 py-2"
+              >
+                <Input
+                  placeholder="Title"
+                  value={mat.title}
+                  onChange={(e) => {
+                    const next = [...materials];
+                    next[i] = { ...next[i], title: e.target.value };
+                    setMaterials(next);
+                  }}
+                  className="flex-1"
+                />
+                <span className="font-mono text-xs text-white/40 truncate max-w-[40%]">
+                  {mat.path}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMaterials(materials.filter((_, j) => j !== i))
+                  }
+                  className="text-white/50 hover:text-red-400"
+                  aria-label="Remove material"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <FileUploader
+          bucket="course-materials"
+          folder={folder}
+          accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.png,.jpg,.jpeg"
+          label="Upload material"
+          onUploaded={(path, file) =>
+            setMaterials([
+              ...materials,
+              { title: file?.name ?? path.split("/").pop() ?? "Material", path },
+            ])
+          }
         />
-        <p className="mt-1 text-xs text-white/40">
-          Paths reference files in the <span className="text-white/60">course-materials</span> bucket.
-        </p>
       </div>
+
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
@@ -469,5 +566,68 @@ function LessonForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function FileUploader({
+  bucket,
+  folder,
+  accept,
+  label = "Upload file",
+  onUploaded,
+}: {
+  bucket: string;
+  folder: string;
+  accept?: string;
+  label?: string;
+  onUploaded: (path: string, file?: File) => void;
+}) {
+  const [progress, setProgress] = useState<number | null>(null);
+  const [error, setError] = useState<string | undefined>();
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(undefined);
+    setProgress(0);
+    try {
+      const { path, token } = await getUploadToken(bucket, folder, file.name);
+      const supabase = createClient();
+      const { error: upErr } = await supabase.storage
+        .from(bucket)
+        .uploadToSignedUrl(path, token, file);
+      if (upErr) throw upErr;
+      setProgress(100);
+      onUploaded(path, file);
+      // brief success flash
+      setTimeout(() => setProgress(null), 600);
+    } catch (err: any) {
+      setError(err.message ?? String(err));
+      setProgress(null);
+    } finally {
+      // reset input so same file can be re-picked
+      e.target.value = "";
+    }
+  }
+
+  return (
+    <div>
+      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs text-white/80 hover:bg-white/10">
+        {progress !== null ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Upload className="h-3.5 w-3.5" />
+        )}
+        {progress !== null ? `Uploading… ${progress}%` : label}
+        <input
+          type="file"
+          accept={accept}
+          onChange={handleFile}
+          className="hidden"
+          disabled={progress !== null}
+        />
+      </label>
+      {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
+    </div>
   );
 }
