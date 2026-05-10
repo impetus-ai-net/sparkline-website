@@ -3,37 +3,60 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, type LucideIcon } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import {
+  STUDENT_NAV,
+  ADMIN_NAV,
+  PROFESSOR_NAV,
+  MENTOR_NAV,
+  INVESTOR_NAV,
+  STAFF_LINKS,
+} from "@/lib/nav-config";
+import type { Role } from "@/lib/types";
 
-export type MobileNavItem = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  exact?: boolean;
+export type MobileNavKind =
+  | "student"
+  | "admin"
+  | "professor"
+  | "mentor"
+  | "investor";
+
+const NAV_BY_KIND = {
+  student: STUDENT_NAV,
+  admin: ADMIN_NAV,
+  professor: PROFESSOR_NAV,
+  mentor: MENTOR_NAV,
+  investor: INVESTOR_NAV,
+} as const;
+
+const LABEL_BY_KIND: Record<MobileNavKind, string | undefined> = {
+  student: undefined,
+  admin: "Admin",
+  professor: "Professor",
+  mentor: "Mentor",
+  investor: "Investor",
 };
 
 /**
- * Mobile-only header + slide-in drawer. Render alongside the desktop
- * sidebar — desktop sidebar uses `hidden md:flex`, this uses `md:hidden`.
+ * Mobile-only header + slide-in drawer. Resolves its own nav items
+ * from `kind` so server layouts only need to pass primitives — keeps
+ * lucide-icon functions out of the server/client serialization boundary.
  */
 export function MobileNav({
-  label,
-  items,
-  extras,
+  kind,
+  role,
 }: {
-  label?: string;
-  items: MobileNavItem[];
-  extras?: { href: string; label: string; icon?: LucideIcon }[];
+  kind: MobileNavKind;
+  /** Authenticated role, used to surface staff cross-links. */
+  role?: Role;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Close on route change.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  // Lock scroll when open.
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -42,6 +65,29 @@ export function MobileNav({
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  const items = NAV_BY_KIND[kind];
+  const label = LABEL_BY_KIND[kind];
+
+  // Staff cross-links shown only when the user has access. `kind`
+  // itself is which panel we're CURRENTLY in, so we drop that one.
+  const extras: { href: string; label: string; icon: any }[] = [];
+  if (role === "admin" && kind !== "admin") extras.push(STAFF_LINKS.admin);
+  if ((role === "admin" || role === "professor") && kind !== "professor") {
+    extras.push(STAFF_LINKS.professor);
+  }
+  if ((role === "admin" || role === "mentor") && kind !== "mentor") {
+    extras.push(STAFF_LINKS.mentor);
+  }
+  if ((role === "admin" || role === "investor") && kind !== "investor") {
+    extras.push(STAFF_LINKS.investor);
+  }
+  const showStudentBack =
+    kind !== "student" &&
+    (role === "admin" ||
+      role === "professor" ||
+      role === "mentor" ||
+      role === "investor");
 
   return (
     <>
@@ -113,7 +159,7 @@ export function MobileNav({
                   </Link>
                 );
               })}
-              {extras && extras.length > 0 && (
+              {(extras.length > 0 || showStudentBack) && (
                 <div className="mt-4 space-y-1 border-t border-white/10 pt-4">
                   {extras.map((it) => {
                     const Icon = it.icon;
@@ -128,6 +174,14 @@ export function MobileNav({
                       </Link>
                     );
                   })}
+                  {showStudentBack && (
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-white/55 hover:bg-white/5 hover:text-white"
+                    >
+                      Student view
+                    </Link>
+                  )}
                 </div>
               )}
             </nav>

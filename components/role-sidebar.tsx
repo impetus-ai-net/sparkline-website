@@ -2,30 +2,38 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, LogOut, ShieldCheck, type LucideIcon } from "lucide-react";
+import { ArrowLeft, LogOut, ShieldCheck } from "lucide-react";
 import type { Role } from "@/lib/types";
+import { MENTOR_NAV, INVESTOR_NAV } from "@/lib/nav-config";
 
-export type SidebarItem = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  exact?: boolean;
+export type RoleSidebarKind = "mentor" | "investor";
+
+const NAV_BY_KIND = {
+  mentor: MENTOR_NAV,
+  investor: INVESTOR_NAV,
+} as const;
+
+const LABEL_BY_KIND: Record<RoleSidebarKind, string> = {
+  mentor: "Mentor",
+  investor: "Investor",
 };
 
 /**
- * Generic role sidebar used by /mentor and /investor (and reusable for
- * future role-scoped panels). Pass a label + items.
+ * Generic role sidebar used by /mentor and /investor. Resolves nav
+ * items from `kind` so the parent server layout only passes
+ * primitives — keeps lucide function refs out of the
+ * server/client serialization boundary.
  */
 export function RoleSidebar({
-  label,
-  items,
+  kind,
   role,
 }: {
-  label: string;
-  items: SidebarItem[];
+  kind: RoleSidebarKind;
   role: Role;
 }) {
   const pathname = usePathname();
+  const items = NAV_BY_KIND[kind];
+  const label = LABEL_BY_KIND[kind];
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-white/10 bg-zinc-950/40 px-4 py-6">
       <Link href="/" className="mb-2 flex items-center gap-2 px-2">
