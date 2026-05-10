@@ -14,6 +14,8 @@ export type ApplicationStatus =
   | "enrolled"
   | "withdrawn";
 
+export type Theme = "dark" | "light";
+
 export type Profile = {
   id: string;
   email: string;
@@ -22,8 +24,30 @@ export type Profile = {
   stripe_customer_id: string | null;
   referral_code: string | null;
   ai_context: Record<string, any> | null;
+  theme: Theme;
   created_at: string;
   updated_at: string;
+};
+
+export type ChargeKind = "fee" | "fine";
+export type ChargeStatus = "pending" | "paid" | "waived" | "cancelled";
+
+export type UserCharge = {
+  id: string;
+  user_id: string;
+  kind: ChargeKind;
+  amount_cents: number;
+  description: string;
+  status: ChargeStatus;
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  paid_at: string | null;
+  waived_at: string | null;
+  waived_by: string | null;
+  waiver_reason: string | null;
 };
 
 export type Cohort_Slug = { slug: string };

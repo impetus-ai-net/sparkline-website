@@ -53,6 +53,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/events", label: "Events", icon: CalendarDays },
   { href: "/admin/mentors", label: "Mentors", icon: Handshake },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
+  { href: "/admin/charges", label: "Fees & fines", icon: CreditCard },
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
   { href: "/admin/settings", label: "Settings", icon: Settings },

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getThemeFromCookie, htmlClassForTheme } from "@/lib/theme";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sparklineyouth.org"),
@@ -40,8 +41,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const theme = getThemeFromCookie();
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={htmlClassForTheme(theme)}>
       <body className="bg-black text-white antialiased">
         <a
           href="#main-content"

@@ -38,7 +38,7 @@ export default async function MentorNotesPage() {
                 {student?.full_name || "—"}
               </div>
               <div className="text-xs text-white/40">{student?.email}</div>
-              <p className="mt-3 whitespace-pre-wrap text-sm text-white/70">
+              <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-white/70">
                 {a.notes}
               </p>
             </Card>

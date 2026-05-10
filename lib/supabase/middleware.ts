@@ -70,6 +70,40 @@ export async function updateSession(request: NextRequest) {
     return redirectTo("/dashboard");
   }
 
+  // Hard-block: any non-admin signed-in user with a pending fine can
+  // only reach the pay-fine screen + billing + signout until paid or
+  // waived. Admins bypass so they can still hit /admin to waive.
+  if (
+    user &&
+    (path.startsWith("/dashboard") ||
+      path.startsWith("/apply") ||
+      path.startsWith("/professor") ||
+      path.startsWith("/mentor") ||
+      path.startsWith("/investor")) &&
+    !path.startsWith("/dashboard/billing") &&
+    !path.startsWith("/dashboard/pay-fine") &&
+    !path.startsWith("/auth")
+  ) {
+    const { data: pendingFine } = await supabase
+      .from("user_charges")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("kind", "fine")
+      .eq("status", "pending")
+      .limit(1)
+      .maybeSingle();
+    if (pendingFine) {
+      const { data: blockProfile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (blockProfile?.role !== "admin") {
+        return redirectTo("/dashboard/pay-fine");
+      }
+    }
+  }
+
   if (
     (path.startsWith("/admin") ||
       path.startsWith("/professor") ||

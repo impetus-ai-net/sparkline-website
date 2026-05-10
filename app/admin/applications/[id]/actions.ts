@@ -118,3 +118,95 @@ export async function reopenApplication(applicationId: string) {
   revalidatePath(`/admin/applications/${applicationId}`);
   revalidatePath("/admin/applications");
 }
+
+/**
+ * Waive the enrollment fee for an accepted student. Marks fee_waived,
+ * enrolls them in the cohort, sends email + notification.
+ */
+export async function waiveApplicationFee(
+  applicationId: string,
+  reason: string,
+) {
+  const { userId: actorId } = await assertAdmin();
+  const admin = createAdminClient();
+
+  const { data: app, error: fetchErr } = await admin
+    .from("applications")
+    .select(
+      "id, status, user_id, cohort_id, fee_waived, full_name, cohort:cohorts(name), profile:profiles(email, full_name)",
+    )
+    .eq("id", applicationId)
+    .single();
+  if (fetchErr || !app) throw new Error(fetchErr?.message ?? "Not found");
+  if (app.fee_waived) throw new Error("Fee is already waived.");
+  if (app.status === "rejected") throw new Error("Application was rejected.");
+
+  await admin
+    .from("applications")
+    .update({
+      fee_waived: true,
+      fee_waiver_reason: reason?.trim() || null,
+      fee_waived_by: actorId,
+      fee_waived_at: new Date().toISOString(),
+      status: "enrolled",
+      paid_at: new Date().toISOString(),
+    })
+    .eq("id", applicationId);
+
+  if (app.cohort_id) {
+    await admin.from("enrollments").upsert(
+      {
+        user_id: app.user_id,
+        cohort_id: app.cohort_id,
+        application_id: applicationId,
+      },
+      { onConflict: "user_id,cohort_id" },
+    );
+  }
+
+  await logAudit({
+    action: "application.fee_waived",
+    targetType: "application",
+    targetId: applicationId,
+    payload: { reason: reason || null },
+  });
+
+  try {
+    const a = app as any;
+    const cohort = Array.isArray(a.cohort) ? a.cohort[0] : a.cohort;
+    const profile = Array.isArray(a.profile) ? a.profile[0] : a.profile;
+    await notify({
+      userId: app.user_id,
+      type: "application_fee_waived",
+      title: "Your enrollment fee has been waived",
+      body: `Welcome to ${cohort?.name ?? "SparkLine"} — you're enrolled.`,
+      link: "/dashboard/course",
+    });
+    if (profile?.email) {
+      const html = `<!doctype html><html><body style="background:#0a0a0a;color:#e7e7e7;font-family:Inter,Arial,sans-serif;margin:0;padding:32px">
+        <div style="max-width:560px;margin:0 auto;background:#111;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:32px">
+          <div style="font-weight:700">Spark<span style="color:#facc15">Line</span></div>
+          <h1 style="font-size:22px;color:#facc15;margin-top:18px">Fee waived — you're in</h1>
+          <p>Welcome to <strong>${escapeHtml(cohort?.name ?? "SparkLine")}</strong>${a.full_name ? `, ${escapeHtml(a.full_name)}` : ""}. We've waived the enrollment fee${reason?.trim() ? ` (${escapeHtml(reason.trim())})` : ""} and your course access is unlocked.</p>
+          <p><a href="https://sparklineyouth.org/dashboard/course" style="display:inline-block;background:#facc15;color:#000;padding:10px 18px;border-radius:8px;font-weight:600;text-decoration:none">Open your course</a></p>
+        </div>
+      </body></html>`;
+      await sendEmail({
+        to: profile.email,
+        subject: "Your SparkLine enrollment fee was waived",
+        html,
+      });
+    }
+  } catch (err) {
+    console.error("[applications] waive notify failed", err);
+  }
+
+  revalidatePath(`/admin/applications/${applicationId}`);
+  revalidatePath("/admin/applications");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/application");
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}

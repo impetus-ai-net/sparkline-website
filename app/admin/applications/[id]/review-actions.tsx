@@ -3,21 +3,30 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea, Label } from "@/components/ui/input";
-import { decideApplication, reopenApplication } from "./actions";
+import { ConfirmDialog } from "@/components/ui/dialog";
+import {
+  decideApplication,
+  reopenApplication,
+  waiveApplicationFee,
+} from "./actions";
 
 export function ReviewActions({
   applicationId,
   status,
+  feeWaived,
   initialNotes,
 }: {
   applicationId: string;
   status: string;
+  feeWaived: boolean;
   initialNotes: string;
 }) {
   const router = useRouter();
   const [notes, setNotes] = useState(initialNotes);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | undefined>();
+  const [confirmWaive, setConfirmWaive] = useState(false);
+  const [waiveReason, setWaiveReason] = useState("");
 
   function decide(decision: "accepted" | "rejected") {
     setError(undefined);
@@ -43,7 +52,27 @@ export function ReviewActions({
     });
   }
 
-  const decided = status === "accepted" || status === "rejected" || status === "paid" || status === "enrolled";
+  function waive() {
+    setError(undefined);
+    start(async () => {
+      try {
+        await waiveApplicationFee(applicationId, waiveReason);
+        setConfirmWaive(false);
+        router.refresh();
+      } catch (e: any) {
+        setError(e.message);
+      }
+    });
+  }
+
+  const decided =
+    status === "accepted" ||
+    status === "rejected" ||
+    status === "paid" ||
+    status === "enrolled";
+  const canWaive =
+    !feeWaived &&
+    (status === "accepted" || status === "submitted" || status === "draft");
 
   return (
     <div className="space-y-4">
@@ -78,12 +107,53 @@ export function ReviewActions({
             Re-open for review
           </Button>
         )}
-        {(status === "paid" || status === "enrolled") && (
-          <p className="text-sm text-white/50">
+        {canWaive && (
+          <Button
+            variant="secondary"
+            onClick={() => setConfirmWaive(true)}
+            disabled={pending}
+          >
+            Waive fee &amp; enroll
+          </Button>
+        )}
+        {feeWaived && (
+          <span className="inline-flex items-center rounded-full bg-spark/10 px-2.5 py-1 text-xs font-medium text-spark">
+            Fee waived
+          </span>
+        )}
+        {(status === "paid" || status === "enrolled") && !feeWaived && (
+          <p className="text-sm text-white/55">
             Payment received. Application is locked.
           </p>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmWaive}
+        title="Waive enrollment fee?"
+        description={
+          <>
+            <p>
+              This skips the $97 charge entirely and enrolls the student
+              in the cohort right now. They'll get an email confirming
+              access.
+            </p>
+            <div className="mt-3 text-left">
+              <Label>Reason (optional, for your records)</Label>
+              <Textarea
+                rows={2}
+                value={waiveReason}
+                onChange={(e) => setWaiveReason(e.target.value)}
+                placeholder="e.g. need-based scholarship"
+              />
+            </div>
+          </>
+        }
+        confirmLabel="Waive &amp; enroll"
+        pending={pending}
+        onConfirm={waive}
+        onCancel={() => !pending && setConfirmWaive(false)}
+      />
     </div>
   );
 }

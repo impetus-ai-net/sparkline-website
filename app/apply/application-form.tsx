@@ -595,7 +595,7 @@ function ReviewRow({
         {label}
       </div>
       <div
-        className={`text-white/80 ${multiline ? "whitespace-pre-wrap" : "truncate"}`}
+        className={`text-white/80 ${multiline ? "whitespace-pre-wrap break-words [overflow-wrap:anywhere]" : "truncate"}`}
       >
         {value || <span className="text-white/30">—</span>}
       </div>

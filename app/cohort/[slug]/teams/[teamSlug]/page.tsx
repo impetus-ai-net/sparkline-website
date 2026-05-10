@@ -82,7 +82,7 @@ export default async function TeamProfile({
         </div>
 
         {team.description && (
-          <p className="mt-8 whitespace-pre-wrap text-base leading-relaxed text-white/80">
+          <p className="mt-8 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-base leading-relaxed text-white/80">
             {team.description}
           </p>
         )}

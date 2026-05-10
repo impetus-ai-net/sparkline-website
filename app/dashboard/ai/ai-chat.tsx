@@ -164,7 +164,7 @@ function Bubble({ message }: { message: Msg }) {
       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-spark/15 text-spark">
         <Sparkles className="h-3.5 w-3.5" />
       </div>
-      <div className="max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-tl-md bg-white/5 px-4 py-2.5 text-sm text-white/90">
+      <div className="max-w-[80%] whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-2xl rounded-tl-md bg-white/5 px-4 py-2.5 text-sm text-white/90">
         {message.content || "…"}
       </div>
     </div>

@@ -64,7 +64,7 @@ export function GradingPanel({
       </div>
 
       {content && (
-        <div className="mt-3 whitespace-pre-wrap rounded-lg bg-zinc-950/60 p-3 text-sm text-white/80">
+        <div className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-lg bg-zinc-950/60 p-3 text-sm text-white/80">
           {content}
         </div>
       )}

@@ -5,28 +5,41 @@ import { requireUser } from "@/lib/auth";
 import { Card, StatusBadge } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReferralCard } from "./referral-card";
+import { ChargePayButton } from "@/components/charge-pay-button";
 import { env } from "@/lib/env";
+import { AlertCircle } from "lucide-react";
 
 export default async function DashboardHome() {
   const user = await requireUser();
   const supabase = createClient();
 
-  const [{ data: profile }, { data: app }, { data: enrollment }] =
-    await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
-      supabase
-        .from("applications")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("enrollments")
-        .select("*, cohort:cohorts(*)")
-        .eq("user_id", user.id)
-        .maybeSingle(),
-    ]);
+  const [
+    { data: profile },
+    { data: app },
+    { data: enrollment },
+    { data: pendingFees },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase
+      .from("applications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("enrollments")
+      .select("*, cohort:cohorts(*)")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("user_charges")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("kind", "fee")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true }),
+  ]);
 
   const greeting = profile?.full_name?.split(" ")[0] || "there";
 
@@ -38,6 +51,31 @@ export default async function DashboardHome() {
       <p className="mt-1 text-sm text-white/50">
         Here's where your SparkLine journey lives.
       </p>
+
+      {(pendingFees?.length ?? 0) > 0 && (
+        <div className="mt-6 space-y-3">
+          {(pendingFees ?? []).map((f: any) => (
+            <Card
+              key={f.id}
+              className="border-amber-300/30 bg-amber-300/5"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-semibold text-amber-200">
+                    Fee due: {f.description}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-white/60">
+                    ${(f.amount_cents / 100).toFixed(2)} — please settle when
+                    you can. You can keep using SparkLine in the meantime.
+                  </p>
+                </div>
+                <ChargePayButton chargeId={f.id} />
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <div className="mt-10 grid gap-5 md:grid-cols-2">
         {/* Application card */}

@@ -106,7 +106,7 @@ export function SubmissionForm({
         {content && (
           <div>
             <Label>Your response</Label>
-            <p className="whitespace-pre-wrap rounded-lg border border-white/10 bg-black/30 p-3 text-white/80">
+            <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] rounded-lg border border-white/10 bg-black/30 p-3 text-white/80">
               {content}
             </p>
           </div>

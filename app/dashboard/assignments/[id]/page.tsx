@@ -86,7 +86,7 @@ export default async function StudentAssignmentDetail({
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">
             Instructions
           </h2>
-          <p className="whitespace-pre-wrap text-sm text-white/80">
+          <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-white/80">
             {assignment.description}
           </p>
         </Card>
@@ -106,7 +106,7 @@ export default async function StudentAssignmentDetail({
             </span>
           </div>
           {submission.feedback && (
-            <p className="mt-3 whitespace-pre-wrap text-sm text-white/80">
+            <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-white/80">
               {submission.feedback}
             </p>
           )}

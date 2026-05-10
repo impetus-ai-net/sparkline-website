@@ -66,3 +66,90 @@ body {
   opacity: 0.5;
   mix-blend-mode: overlay;
 }
+
+/* ============================================================================
+ * Light theme overrides.
+ *
+ * The whole codebase was authored in dark-only with literal Tailwind utility
+ * classes (bg-black, text-white, border-white/X, etc). Rather than touch
+ * every component, we override the most common dark-palette utilities under
+ * the `.theme-light` root class. Marketing routes don't get this class so
+ * the public site stays intentionally dark.
+ *
+ * Keep this list in sync if you add new dark utilities you want to mirror.
+ * ============================================================================ */
+
+.theme-light body {
+  background: #ffffff;
+  color: #18181b;
+}
+.theme-light ::selection {
+  background: #facc15;
+  color: #18181b;
+}
+
+/* Backgrounds: dark surfaces -> light surfaces */
+.theme-light .bg-black { background-color: #ffffff; }
+.theme-light .bg-black\/30 { background-color: rgba(244, 244, 245, 0.6); }
+.theme-light .bg-black\/40 { background-color: rgba(244, 244, 245, 0.7); }
+.theme-light .bg-black\/50 { background-color: rgba(244, 244, 245, 0.75); }
+.theme-light .bg-black\/70 { background-color: rgba(24, 24, 27, 0.4); }
+.theme-light .bg-black\/80 { background-color: rgba(255, 255, 255, 0.85); }
+.theme-light .bg-zinc-900,
+.theme-light .bg-zinc-950 { background-color: #f4f4f5; }
+.theme-light .bg-zinc-900\/30,
+.theme-light .bg-zinc-900\/40,
+.theme-light .bg-zinc-900\/60,
+.theme-light .bg-zinc-900\/80 { background-color: rgba(244, 244, 245, 0.7); }
+.theme-light .bg-zinc-950\/40,
+.theme-light .bg-zinc-950\/60 { background-color: rgba(244, 244, 245, 0.6); }
+
+.theme-light .bg-white\/5 { background-color: rgba(24, 24, 27, 0.05); }
+.theme-light .bg-white\/10 { background-color: rgba(24, 24, 27, 0.1); }
+.theme-light .bg-white\/\[0\.02\] { background-color: rgba(24, 24, 27, 0.02); }
+.theme-light .bg-white\/\[0\.03\] { background-color: rgba(24, 24, 27, 0.04); }
+.theme-light .bg-white\/\[0\.04\] { background-color: rgba(24, 24, 27, 0.04); }
+
+/* Text */
+.theme-light .text-white { color: #18181b; }
+.theme-light .text-white\/90 { color: rgba(24, 24, 27, 0.9); }
+.theme-light .text-white\/80 { color: rgba(24, 24, 27, 0.82); }
+.theme-light .text-white\/70 { color: rgba(24, 24, 27, 0.75); }
+.theme-light .text-white\/65 { color: rgba(24, 24, 27, 0.7); }
+.theme-light .text-white\/60 { color: rgba(24, 24, 27, 0.65); }
+.theme-light .text-white\/55 { color: rgba(24, 24, 27, 0.6); }
+.theme-light .text-white\/50 { color: rgba(24, 24, 27, 0.55); }
+.theme-light .text-white\/45 { color: rgba(24, 24, 27, 0.5); }
+.theme-light .text-white\/40 { color: rgba(24, 24, 27, 0.5); }
+.theme-light .text-white\/30 { color: rgba(24, 24, 27, 0.4); }
+
+/* Placeholders */
+.theme-light .placeholder\:text-white\/30::placeholder { color: rgba(24, 24, 27, 0.4); }
+
+/* Borders */
+.theme-light .border-white\/5 { border-color: rgba(24, 24, 27, 0.06); }
+.theme-light .border-white\/10 { border-color: rgba(24, 24, 27, 0.1); }
+.theme-light .border-white\/15 { border-color: rgba(24, 24, 27, 0.15); }
+.theme-light .border-white\/20 { border-color: rgba(24, 24, 27, 0.2); }
+.theme-light .divide-white\/5 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(24, 24, 27, 0.06);
+}
+.theme-light .divide-white\/10 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(24, 24, 27, 0.1);
+}
+
+/* Hovers */
+.theme-light .hover\:bg-white\/5:hover { background-color: rgba(24, 24, 27, 0.05); }
+.theme-light .hover\:bg-white\/10:hover { background-color: rgba(24, 24, 27, 0.1); }
+.theme-light .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(24, 24, 27, 0.03); }
+.theme-light .hover\:bg-white\/\[0\.03\]:hover { background-color: rgba(24, 24, 27, 0.04); }
+.theme-light .hover\:text-white:hover { color: #18181b; }
+
+/* Spark variants — keep the brand yellow but dial down the heavy glows for light mode */
+.theme-light .shadow-\[0_0_24px_-6px_rgba\(250\,204\,21\,0\.7\)\] {
+  box-shadow: 0 8px 20px -10px rgba(250, 204, 21, 0.5);
+}
+.theme-light .text-spark { color: #b88e00; }
+.theme-light .text-spark\/80 { color: rgba(184, 142, 0, 0.85); }
+
+/* The brand-yellow primary button keeps a dark text for contrast — already correct */

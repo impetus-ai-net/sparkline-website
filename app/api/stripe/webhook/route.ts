@@ -57,8 +57,47 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const applicationId = session.metadata?.application_id;
+        const kind = session.metadata?.kind;
         const userId = session.metadata?.user_id;
+
+        // Branch 1: user_charge (fee or fine) checkout.
+        if (kind === "user_charge") {
+          const chargeId = session.metadata?.charge_id;
+          const piId =
+            typeof session.payment_intent === "string"
+              ? session.payment_intent
+              : session.payment_intent?.id ?? null;
+          if (chargeId) {
+            const { data: charge } = await admin
+              .from("user_charges")
+              .select("user_id, kind, description, amount_cents")
+              .eq("id", chargeId)
+              .single();
+            await admin
+              .from("user_charges")
+              .update({
+                status: "paid",
+                paid_at: new Date().toISOString(),
+                stripe_payment_intent_id: piId,
+              })
+              .eq("id", chargeId);
+            if (charge) {
+              await notify({
+                userId: charge.user_id,
+                type: "charge_paid",
+                title:
+                  (charge.kind === "fine" ? "Fine paid: " : "Fee paid: ") +
+                  charge.description,
+                body: `Amount: $${(charge.amount_cents / 100).toFixed(2)}`,
+                link: "/dashboard/billing",
+              });
+            }
+          }
+          break;
+        }
+
+        // Branch 2: application enrollment checkout (original flow).
+        const applicationId = session.metadata?.application_id;
         const cohortId = session.metadata?.cohort_id || null;
         if (!applicationId || !userId) break;
 

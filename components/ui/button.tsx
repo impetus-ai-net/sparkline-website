@@ -9,8 +9,9 @@ export const Button = React.forwardRef<HTMLButtonElement, Props>(function Button
   { className = "", variant = "primary", size = "md", ...props },
   ref,
 ) {
+  // duration-75 + active:scale gives tactile press feedback within a frame.
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark/60";
+    "inline-flex select-none items-center justify-center gap-2 rounded-lg font-medium transition-[background-color,transform,box-shadow,opacity] duration-75 ease-out active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark/60";
   const variants = {
     primary:
       "bg-spark text-black hover:bg-spark-200 shadow-[0_0_24px_-6px_rgba(250,204,21,0.7)]",

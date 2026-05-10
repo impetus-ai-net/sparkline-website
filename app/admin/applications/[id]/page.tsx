@@ -67,7 +67,7 @@ export default async function AdminApplicationDetail({
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-white/50">
           Why SparkLine
         </h3>
-        <p className="whitespace-pre-wrap text-sm text-white/80">
+        <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-white/80">
           {app.why_join || "—"}
         </p>
       </Card>
@@ -76,7 +76,7 @@ export default async function AdminApplicationDetail({
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-white/50">
           Startup idea
         </h3>
-        <p className="whitespace-pre-wrap text-sm text-white/80">
+        <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-white/80">
           {app.startup_idea || "—"}
         </p>
       </Card>
@@ -85,7 +85,7 @@ export default async function AdminApplicationDetail({
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-white/50">
           Experience
         </h3>
-        <p className="whitespace-pre-wrap text-sm text-white/80">
+        <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-white/80">
           {app.experience || "—"}
         </p>
       </Card>
@@ -94,7 +94,12 @@ export default async function AdminApplicationDetail({
         <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-white/50">
           Decision
         </h3>
-        <ReviewActions applicationId={app.id} status={app.status} initialNotes={app.review_notes ?? ""} />
+        <ReviewActions
+          applicationId={app.id}
+          status={app.status}
+          feeWaived={Boolean((app as any).fee_waived)}
+          initialNotes={app.review_notes ?? ""}
+        />
       </Card>
     </div>
   );
@@ -126,7 +131,7 @@ function LinkRow({
           href={value}
           target="_blank"
           rel="noopener noreferrer"
-          className="truncate text-spark hover:underline"
+          className="min-w-0 truncate text-spark hover:underline"
         >
           {value}
         </a>

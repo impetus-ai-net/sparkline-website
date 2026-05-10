@@ -65,6 +65,7 @@ export async function getProfile(): Promise<Profile | null> {
     stripe_customer_id: null,
     referral_code: null,
     ai_context: null,
+    theme: "dark",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

@@ -115,7 +115,7 @@ function CommentItem({
           {new Date(comment.created_at).toLocaleString()}
         </span>
       </div>
-      <p className="mt-1 whitespace-pre-wrap text-sm text-white/80">
+      <p className="mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-white/80">
         {comment.body}
       </p>
       <div className="mt-2 flex items-center gap-3 text-xs">
