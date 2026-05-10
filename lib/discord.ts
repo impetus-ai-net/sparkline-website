@@ -6,6 +6,32 @@ import type { Role } from "@/lib/types";
 const API = "https://discord.com/api/v10";
 
 // ---------------------------------------------------------------------------
+// Master kill-switch. Admins can flip this in /admin/discord to pause the
+// whole integration without redeploying or pulling env vars.
+//
+// IMPORTANT: every helper that touches Discord short-circuits when this is
+// false, so callers don't need to remember to check. UI gating reads the
+// same flag via getDiscordSettings().enabled.
+// ---------------------------------------------------------------------------
+export async function isDiscordEnabled(): Promise<boolean> {
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "discord_enabled")
+      .maybeSingle();
+    // Default to enabled if the key isn't seeded yet — preserves prior
+    // behavior between deploys.
+    if (!data) return true;
+    return data.value !== false && data.value !== "false";
+  } catch (err) {
+    console.error("[discord] enabled check failed", err);
+    return true;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Webhook posting (legacy — still used for the announcements channel +
 // new-enrollment trumpet). Failures are swallowed.
 // ---------------------------------------------------------------------------
@@ -15,6 +41,7 @@ export async function postDiscordWebhook(args: {
   embeds?: Record<string, any>[];
   username?: string;
 }): Promise<boolean> {
+  if (!(await isDiscordEnabled())) return false;
   const url = args.webhookUrl ?? env.discordAnnouncementsWebhook;
   if (!url) return false;
   try {
@@ -45,6 +72,7 @@ export async function postDiscordWebhook(args: {
 // values change rarely and the queries are cheap.
 // ---------------------------------------------------------------------------
 export type DiscordSettings = {
+  enabled: boolean;
   announcementsChannelId: string;
   eventsChannelId: string;
   adminFeedChannelId: string;
@@ -52,6 +80,7 @@ export type DiscordSettings = {
 };
 
 const SETTING_KEYS = [
+  "discord_enabled",
   "discord_channel_announcements_id",
   "discord_channel_events_id",
   "discord_channel_admin_feed_id",
@@ -67,20 +96,29 @@ export async function getDiscordSettings(): Promise<DiscordSettings> {
     .from("site_settings")
     .select("key, value")
     .in("key", SETTING_KEYS as unknown as string[]);
-  const map = new Map<string, string>();
+  const map = new Map<string, unknown>();
   for (const row of data ?? []) {
-    const v = typeof row.value === "string" ? row.value : "";
-    map.set(row.key, v);
+    map.set(row.key, row.value);
   }
+  const rawEnabled = map.get("discord_enabled");
+  const enabled =
+    rawEnabled === undefined
+      ? true
+      : rawEnabled !== false && rawEnabled !== "false";
+  const str = (k: string) => {
+    const v = map.get(k);
+    return typeof v === "string" ? v : "";
+  };
   return {
-    announcementsChannelId: map.get("discord_channel_announcements_id") || "",
-    eventsChannelId: map.get("discord_channel_events_id") || "",
-    adminFeedChannelId: map.get("discord_channel_admin_feed_id") || "",
+    enabled,
+    announcementsChannelId: str("discord_channel_announcements_id"),
+    eventsChannelId: str("discord_channel_events_id"),
+    adminFeedChannelId: str("discord_channel_admin_feed_id"),
     roleIdByRole: {
-      student: map.get("discord_role_student_id") || env.discordRoleStudent || "",
-      mentor: map.get("discord_role_mentor_id") || "",
-      admin: map.get("discord_role_admin_id") || "",
-      investor: map.get("discord_role_investor_id") || "",
+      student: str("discord_role_student_id") || env.discordRoleStudent || "",
+      mentor: str("discord_role_mentor_id"),
+      admin: str("discord_role_admin_id"),
+      investor: str("discord_role_investor_id"),
     },
   };
 }
@@ -151,6 +189,7 @@ export async function addMemberToGuild(args: {
   roleIds?: string[];
   nick?: string;
 }): Promise<boolean> {
+  if (!(await isDiscordEnabled())) return false;
   if (!env.discordBotToken || !env.discordGuildId) return false;
   try {
     const res = await fetch(
@@ -180,6 +219,7 @@ export async function addMemberToGuild(args: {
 // Guild operations via bot token.
 // ---------------------------------------------------------------------------
 export async function fetchGuildMember(discordUserId: string) {
+  if (!(await isDiscordEnabled())) return null;
   if (!env.discordBotToken || !env.discordGuildId) return null;
   try {
     const res = await fetch(
@@ -197,6 +237,7 @@ export async function addRoleToMember(
   discordUserId: string,
   roleId: string,
 ): Promise<boolean> {
+  if (!(await isDiscordEnabled())) return false;
   if (!env.discordBotToken || !env.discordGuildId || !roleId) return false;
   try {
     const res = await fetch(
@@ -217,6 +258,7 @@ export async function removeRoleFromMember(
   discordUserId: string,
   roleId: string,
 ): Promise<boolean> {
+  if (!(await isDiscordEnabled())) return false;
   if (!env.discordBotToken || !env.discordGuildId || !roleId) return false;
   try {
     const res = await fetch(
@@ -244,6 +286,7 @@ export async function syncMemberRoles(
 ): Promise<void> {
   if (!env.discordBotToken || !env.discordGuildId) return;
   const settings = await getDiscordSettings();
+  if (!settings.enabled) return;
   const managedRoleIds = Object.values(settings.roleIdByRole).filter(
     Boolean,
   ) as string[];
@@ -258,6 +301,7 @@ export async function syncMemberRoles(
 }
 
 export async function kickFromGuild(discordUserId: string): Promise<boolean> {
+  if (!(await isDiscordEnabled())) return false;
   if (!env.discordBotToken || !env.discordGuildId) return false;
   try {
     const res = await fetch(
@@ -284,6 +328,7 @@ export async function postChannelMessage(
     embeds?: Record<string, any>[];
   },
 ): Promise<boolean> {
+  if (!(await isDiscordEnabled())) return false;
   if (!env.discordBotToken || !channelId) return false;
   try {
     const res = await fetch(`${API}/channels/${channelId}/messages`, {

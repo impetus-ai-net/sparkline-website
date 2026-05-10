@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { verifyInteractionSignature, postChannelMessage, announcementEmbed, getDiscordSettings } from "@/lib/discord";
+import { verifyInteractionSignature, postChannelMessage, announcementEmbed, getDiscordSettings, isDiscordEnabled } from "@/lib/discord";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { env } from "@/lib/env";
 
@@ -47,10 +47,17 @@ export async function POST(req: Request) {
   }
 
   if (body.type === PING) {
+    // Always answer PING so Discord's endpoint check passes even
+    // while the integration is paused.
     return NextResponse.json({ type: PONG });
   }
   if (body.type !== APPLICATION_COMMAND) {
     return ephemeral("Unsupported interaction type.");
+  }
+
+  // After PING, refuse commands when the master toggle is off.
+  if (!(await isDiscordEnabled())) {
+    return ephemeral("SparkLine's Discord integration is paused right now.");
   }
 
   const name: string = body.data?.name ?? "";

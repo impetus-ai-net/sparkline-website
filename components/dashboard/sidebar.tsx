@@ -10,14 +10,18 @@ import { NotificationBell } from "@/components/notification-bell";
 export function StudentSidebar({
   role,
   aiAccess,
+  discordEnabled,
 }: {
   role: Role;
   aiAccess: boolean;
+  discordEnabled: boolean;
 }) {
   const pathname = usePathname();
-  const items = STUDENT_NAV.filter(
-    (it) => it.href !== "/dashboard/ai" || aiAccess,
-  );
+  const items = STUDENT_NAV.filter((it) => {
+    if (it.href === "/dashboard/ai") return aiAccess;
+    if (it.href === "/dashboard/community") return discordEnabled;
+    return true;
+  });
   const showAdmin = role === "admin";
   const showMentor = role === "admin" || role === "mentor";
   const showInvestor = role === "admin" || role === "investor";
