@@ -213,6 +213,10 @@ update public.cohorts set slug = lower(regexp_replace(name, '[^a-zA-Z0-9]+', '-'
 
 -- ----------------------------------------------------------------------------
 -- Teams + members
+--
+-- Both tables must exist before either's policies run, because the
+-- `teams` policies reference `team_members` and vice versa. We create
+-- both tables first, then attach RLS / policies.
 -- ----------------------------------------------------------------------------
 create table if not exists public.teams (
   id uuid primary key default gen_random_uuid(),
@@ -231,11 +235,24 @@ create table if not exists public.teams (
   unique (cohort_id, slug)
 );
 
+create table if not exists public.team_members (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  role text not null default 'member',
+  created_at timestamptz not null default now(),
+  unique (team_id, user_id)
+);
+
+create index if not exists team_members_team_idx on public.team_members(team_id);
+create index if not exists team_members_user_idx on public.team_members(user_id);
+
 drop trigger if exists touch_teams on public.teams;
 create trigger touch_teams before update on public.teams
   for each row execute procedure public.touch_updated_at();
 
 alter table public.teams enable row level security;
+alter table public.team_members enable row level security;
 
 drop policy if exists "teams read" on public.teams;
 create policy "teams read" on public.teams
@@ -268,20 +285,6 @@ create policy "teams member write" on public.teams
 drop policy if exists "teams admin write" on public.teams;
 create policy "teams admin write" on public.teams
   for all using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
-
-create table if not exists public.team_members (
-  id uuid primary key default gen_random_uuid(),
-  team_id uuid not null references public.teams(id) on delete cascade,
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  role text not null default 'member',
-  created_at timestamptz not null default now(),
-  unique (team_id, user_id)
-);
-
-create index if not exists team_members_team_idx on public.team_members(team_id);
-create index if not exists team_members_user_idx on public.team_members(user_id);
-
-alter table public.team_members enable row level security;
 
 drop policy if exists "team_members read" on public.team_members;
 create policy "team_members read" on public.team_members
