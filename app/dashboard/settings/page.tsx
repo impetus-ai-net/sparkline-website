@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { isDiscordEnabled } from "@/lib/discord";
 import { SettingsForm } from "./settings-form";
 import { ThemeToggle } from "./theme-toggle";
 import { DiscordCard } from "./discord-card";
@@ -10,6 +11,7 @@ export const metadata = { title: "Settings · SparkLine" };
 
 const ERROR_COPY: Record<string, string> = {
   not_configured: "Discord isn't configured on this site yet.",
+  disabled: "The Discord integration is currently paused.",
   bad_state: "Link expired or was tampered with — please retry.",
   not_signed_in: "Your session changed mid-flow — please retry.",
   oauth_failed: "Discord rejected the login. Please retry.",
@@ -25,13 +27,15 @@ export default async function SettingsPage({
 }) {
   const user = await requireUser();
   const supabase = createClient();
-  const [{ data: profile }, { data: settingRows }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase
-      .from("site_settings")
-      .select("key, value")
-      .in("key", ["discord_url"]),
-  ]);
+  const [{ data: profile }, { data: settingRows }, discordEnabled] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).single(),
+      supabase
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["discord_url"]),
+      isDiscordEnabled(),
+    ]);
 
   const theme: Theme = profile?.theme === "light" ? "light" : "dark";
   const discordInvite =
@@ -74,17 +78,19 @@ export default async function SettingsPage({
         <ThemeToggle initial={theme} />
       </Card>
 
-      <div className="mt-6">
-        <DiscordCard
-          profile={{
-            discord_user_id: profile?.discord_user_id ?? null,
-            discord_username: profile?.discord_username ?? null,
-            discord_avatar: profile?.discord_avatar ?? null,
-            discord_linked_at: profile?.discord_linked_at ?? null,
-          }}
-          discordInvite={discordInvite}
-        />
-      </div>
+      {discordEnabled && (
+        <div className="mt-6">
+          <DiscordCard
+            profile={{
+              discord_user_id: profile?.discord_user_id ?? null,
+              discord_username: profile?.discord_username ?? null,
+              discord_avatar: profile?.discord_avatar ?? null,
+              discord_linked_at: profile?.discord_linked_at ?? null,
+            }}
+            discordInvite={discordInvite}
+          />
+        </div>
+      )}
 
       <Card className="mt-6">
         <SettingsForm

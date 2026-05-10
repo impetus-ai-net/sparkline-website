@@ -1,6 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/card";
 import { DiscordConfigForm } from "./config-form";
+import { EnableToggle } from "./enable-toggle";
+import { isDiscordEnabled } from "@/lib/discord";
 import { env } from "@/lib/env";
 import type { DiscordConfigInput } from "./actions";
 
@@ -18,10 +20,13 @@ const KEYS_TO_FIELD = {
 
 export default async function AdminDiscordPage() {
   const admin = createAdminClient();
-  const { data: rows } = await admin
-    .from("site_settings")
-    .select("key, value")
-    .in("key", Object.keys(KEYS_TO_FIELD));
+  const [{ data: rows }, enabled] = await Promise.all([
+    admin
+      .from("site_settings")
+      .select("key, value")
+      .in("key", Object.keys(KEYS_TO_FIELD)),
+    isDiscordEnabled(),
+  ]);
 
   const initial: DiscordConfigInput = {
     announcementsChannelId: "",
@@ -55,6 +60,10 @@ export default async function AdminDiscordPage() {
         Wire SparkLine into your Discord server. Account linking, role sync,
         cross-posts, and slash commands run off of this configuration.
       </p>
+
+      <div className="mt-6">
+        <EnableToggle initial={enabled} />
+      </div>
 
       <Card className="mt-6">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-white/55">

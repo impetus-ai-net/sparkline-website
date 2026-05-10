@@ -1,15 +1,17 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { discordAvatarUrl } from "@/lib/discord";
+import { discordAvatarUrl, isDiscordEnabled } from "@/lib/discord";
 
 export const metadata = { title: "Community · SparkLine" };
 
 export default async function CommunityPage() {
   const user = await requireUser();
+  if (!(await isDiscordEnabled())) redirect("/dashboard");
   const supabase = createClient();
   const [{ data: profile }, { data: settings }, { data: announcements }] =
     await Promise.all([

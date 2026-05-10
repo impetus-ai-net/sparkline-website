@@ -38,12 +38,15 @@ export function MobileNav({
   kind,
   role,
   aiAccess,
+  discordEnabled,
 }: {
   kind: MobileNavKind;
   /** Authenticated role, used to surface staff cross-links. */
   role?: Role;
   /** Whether the AI co-founder link should appear (student kind only). */
   aiAccess?: boolean;
+  /** Whether the Community link should appear (student kind only). */
+  discordEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -63,8 +66,14 @@ export function MobileNav({
 
   const rawItems = NAV_BY_KIND[kind];
   const items =
-    kind === "student" && aiAccess === false
-      ? rawItems.filter((it) => it.href !== "/dashboard/ai")
+    kind === "student"
+      ? rawItems.filter((it) => {
+          if (it.href === "/dashboard/ai" && aiAccess === false) return false;
+          if (it.href === "/dashboard/community" && discordEnabled === false) {
+            return false;
+          }
+          return true;
+        })
       : rawItems;
   const label = LABEL_BY_KIND[kind];
 

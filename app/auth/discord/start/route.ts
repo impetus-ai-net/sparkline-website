@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isDiscordEnabled } from "@/lib/discord";
 import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,11 @@ export async function GET(req: Request) {
   if (!env.discordClientId) {
     return NextResponse.redirect(
       new URL("/dashboard/settings?discord_error=not_configured", req.url),
+    );
+  }
+  if (!(await isDiscordEnabled())) {
+    return NextResponse.redirect(
+      new URL("/dashboard/settings?discord_error=disabled", req.url),
     );
   }
 

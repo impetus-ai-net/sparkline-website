@@ -5,6 +5,34 @@ import { assertAdmin } from "@/lib/server-guards";
 import { logAudit } from "@/lib/audit";
 import { postChannelMessage, getDiscordSettings } from "@/lib/discord";
 
+/**
+ * Master kill-switch. When false, every Discord side effect short-
+ * circuits and the student-facing Discord UI hides itself.
+ */
+export async function setDiscordEnabled(enabled: boolean) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("site_settings")
+    .upsert(
+      {
+        key: "discord_enabled",
+        value: enabled,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "key" },
+    );
+  if (error) throw new Error(error.message);
+  await logAudit({
+    action: "discord.enabled_toggled",
+    payload: { enabled },
+  });
+  revalidatePath("/admin/discord");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/community");
+}
+
 export type DiscordConfigInput = {
   announcementsChannelId: string;
   eventsChannelId: string;

@@ -7,6 +7,7 @@ import {
   addMemberToGuild,
   syncMemberRoles,
   getDiscordSettings,
+  isDiscordEnabled,
 } from "@/lib/discord";
 import { env } from "@/lib/env";
 import { logAudit } from "@/lib/audit";
@@ -29,6 +30,7 @@ export async function GET(req: Request) {
 
   if (errorParam) return back(errorParam);
   if (!code || !state) return back("missing_code");
+  if (!(await isDiscordEnabled())) return back("disabled");
 
   const [stateUserId, stateNonce] = state.split(":");
   const cookieNonce = req.headers
