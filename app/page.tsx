@@ -6,7 +6,6 @@ import ScrollPreview from "@/components/scroll-preview";
 import Curriculum from "@/components/curriculum";
 import Stats from "@/components/stats";
 import Comparison from "@/components/comparison";
-import Founders from "@/components/founders";
 import FAQ from "@/components/faq";
 import CTA from "@/components/cta";
 import Footer from "@/components/footer";
@@ -22,7 +21,6 @@ export default function Home() {
       <Curriculum />
       <Stats />
       <Comparison />
-      <Founders />
       <FAQ />
       <CTA />
       <Footer />

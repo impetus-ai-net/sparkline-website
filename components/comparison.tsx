@@ -87,9 +87,8 @@ export default function Comparison() {
             Affordable. Virtual. <span className="shine">Real investors.</span>
           </h2>
           <p className="mt-5 text-lg text-white/60">
-            No competitor offers all four — affordable, rolling cohorts, fully
-            virtual, and real angel investors. That combination is unique to
-            SparkLine.
+            No other program offers all four: affordable, year-round
+            cohorts, fully virtual, and real angel investors on demo day.
           </p>
         </motion.div>
 

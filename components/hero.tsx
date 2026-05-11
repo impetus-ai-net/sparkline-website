@@ -33,7 +33,7 @@ export default function Hero() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-spark opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-spark" />
           </span>
-          Cohort 1 — Summer 2026 — Now accepting applications
+          Cohort 1 · Summer 2026 · Now accepting applications
         </motion.div>
 
         <motion.h1
@@ -52,9 +52,10 @@ export default function Hero() {
           transition={{ delay: 0.4, duration: 0.7 }}
           className="mx-auto mt-6 max-w-2xl text-lg md:text-xl text-white/60"
         >
-          SparkLine is the 4-week, fully virtual accelerator for high schoolers.
-          Take your idea from raw concept to investor-ready pitch 
-          And walk away with a real shot at funding before you graduate.
+          SparkLine is the 4-week, fully virtual accelerator for high
+          schoolers. Take your idea from raw concept to investor-ready
+          pitch — and walk away with a real shot at funding before you
+          graduate.
         </motion.p>
 
         <motion.div

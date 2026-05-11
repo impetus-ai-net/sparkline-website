@@ -6,18 +6,18 @@ import { DollarSign, MapPin, Award } from "lucide-react";
 const problems = [
   {
     icon: DollarSign,
-    title: "$3,000–$8,000+",
-    body: "LaunchX, LeanGap, and most quality programs are locked behind massive tuition. The teens who'd benefit most can't afford to apply.",
+    title: "Priced for the few",
+    body: "LaunchX, LeanGap, and most quality programs are locked behind $3,000–$8,000+ tuition. The teens who'd benefit most can't afford to apply.",
   },
   {
     icon: MapPin,
-    title: "Locked to a city or season.",
-    body: "If you don't live in the right place, or your summer's already booked, you're out. Most accelerators run a couple weeks a year, and thats not how a real startup works.",
+    title: "Locked to a city or season",
+    body: "If you don't live in the right place, or your summer's already booked, you're out. Most accelerators run a couple of weeks a year — that's not how a real startup works.",
   },
   {
     icon: Award,
-    title: "Judges and certificates. Not investors.",
-    body: "Most programs end with a panel handing out plaques. That's not the real world. We end with real investors writing real checks.",
+    title: "Judges, not investors",
+    body: "Most programs end with a panel handing out plaques. That's not the real world. We end with real angel investors writing real checks.",
   },
 ];
 
@@ -39,10 +39,10 @@ export default function Problem() {
             Youth entrepreneurship is broken.
           </h2>
           <p className="mt-5 text-lg text-white/60">
-            The teens who want to build companies don't need another business
-            plan competition. They need access. Right now, that's reserved for
-            only those who can afford to pay for expensive programs, or who live 
-            in the right areas.
+            The teens who want to build companies don't need another
+            business-plan competition. They need access — and right now
+            that's reserved for people who can afford the tuition or who
+            happen to live in the right zip code.
           </p>
         </motion.div>
 
