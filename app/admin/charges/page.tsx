@@ -38,11 +38,21 @@ export default async function AdminChargesPage({
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="text-3xl font-bold tracking-tight">Fees &amp; fines</h1>
-      <p className="mt-1 text-sm text-white/55">
-        Issue an admin-driven fee (soft prompt) or fine (hard block until
-        paid). Both can be paid via Stripe or waived.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Fees &amp; fines</h1>
+          <p className="mt-1 text-sm text-white/55">
+            Issue an admin-driven fee (soft prompt) or fine (hard block until
+            paid). Both can be paid via Stripe or waived.
+          </p>
+        </div>
+        <a
+          href="/api/admin/export/charges"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+        >
+          Export CSV
+        </a>
+      </div>
 
       <Card className="mt-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white/55">

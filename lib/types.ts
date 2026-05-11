@@ -66,6 +66,41 @@ export type Notification = {
   created_at: string;
 };
 
+export type StudentCheckin = {
+  id: string;
+  user_id: string;
+  cohort_id: string | null;
+  week_start: string;
+  accomplished: string | null;
+  next_up: string | null;
+  blockers: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CheckinFeedback = {
+  id: string;
+  checkin_id: string;
+  author_id: string;
+  body: string;
+  created_at: string;
+};
+
+export type Resource = {
+  id: string;
+  cohort_id: string | null;
+  category: string;
+  title: string;
+  description: string | null;
+  storage_path: string | null;
+  external_url: string | null;
+  size_bytes: number | null;
+  mime_type: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AuditLog = {
   id: string;
   actor_id: string | null;

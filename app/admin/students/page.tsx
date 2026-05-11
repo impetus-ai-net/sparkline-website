@@ -36,11 +36,21 @@ export default async function AdminStudentsPage({
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="text-3xl font-bold tracking-tight">People</h1>
-      <p className="mt-1 text-sm text-white/50">
-        Everyone with an account. Change a role inline to grant or revoke
-        access.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">People</h1>
+          <p className="mt-1 text-sm text-white/50">
+            Everyone with an account. Change a role inline to grant or revoke
+            access.
+          </p>
+        </div>
+        <a
+          href="/api/admin/export/people"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+        >
+          Export CSV
+        </a>
+      </div>
 
       {/* Role tabs with counts */}
       <div className="mt-6 flex flex-wrap gap-2">

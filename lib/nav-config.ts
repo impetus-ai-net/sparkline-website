@@ -20,6 +20,8 @@ import {
   MessagesSquare,
   Star,
   Megaphone,
+  CheckCircle,
+  FolderArchive,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -35,7 +37,9 @@ export const STUDENT_NAV: NavItem[] = [
   { href: "/dashboard/application", label: "Application", icon: FileText },
   { href: "/dashboard/course", label: "Course", icon: PlayCircle },
   { href: "/dashboard/assignments", label: "Assignments", icon: ClipboardList },
+  { href: "/dashboard/checkin", label: "Check-in", icon: CheckCircle },
   { href: "/dashboard/events", label: "Events", icon: CalendarDays },
+  { href: "/dashboard/resources", label: "Resources", icon: FolderArchive },
   { href: "/dashboard/community", label: "Community", icon: MessagesSquare },
   { href: "/dashboard/ai", label: "AI co-founder", icon: Sparkles },
   { href: "/dashboard/files", label: "Files", icon: FolderOpen },
@@ -52,6 +56,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/course", label: "Course", icon: BookOpen },
   { href: "/admin/events", label: "Events", icon: CalendarDays },
   { href: "/admin/mentors", label: "Mentors", icon: Handshake },
+  { href: "/admin/resources", label: "Resources", icon: FolderArchive },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/discord", label: "Discord", icon: MessagesSquare },
   { href: "/admin/charges", label: "Fees & fines", icon: CreditCard },
@@ -63,6 +68,7 @@ export const ADMIN_NAV: NavItem[] = [
 export const MENTOR_NAV: NavItem[] = [
   { href: "/mentor", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/mentor/students", label: "Students", icon: Users },
+  { href: "/mentor/checkins", label: "Check-ins", icon: CheckCircle },
   { href: "/mentor/course", label: "Course", icon: BookOpen },
   { href: "/mentor/assignments", label: "Assignments", icon: ClipboardList },
 ];
