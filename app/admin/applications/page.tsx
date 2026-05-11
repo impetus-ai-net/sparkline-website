@@ -25,10 +25,20 @@ export default async function AdminApplicationsPage({
 
   return (
     <div className="mx-auto max-w-6xl">
-      <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
-      <p className="mt-1 text-sm text-white/50">
-        Review and decide on applications.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
+          <p className="mt-1 text-sm text-white/50">
+            Review and decide on applications.
+          </p>
+        </div>
+        <a
+          href="/api/admin/export/applications"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+        >
+          Export CSV
+        </a>
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
         {filters.map((f) => {

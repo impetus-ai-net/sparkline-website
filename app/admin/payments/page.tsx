@@ -82,13 +82,19 @@ export default async function AdminPaymentsPage({
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Payments</h1>
           <p className="mt-1 text-sm text-white/50">
             Stripe activity, revenue, and per-cohort breakdown.
           </p>
         </div>
+        <a
+          href="/api/admin/export/payments"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+        >
+          Export CSV
+        </a>
       </div>
 
       {/* Stat tiles */}

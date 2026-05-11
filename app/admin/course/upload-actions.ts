@@ -2,7 +2,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertStaff, assertSelf } from "@/lib/server-guards";
 
-const STAFF_BUCKETS = new Set(["course-videos", "course-materials"]);
+const STAFF_BUCKETS = new Set([
+  "course-videos",
+  "course-materials",
+  "resources",
+]);
 const SELF_BUCKETS = new Set(["submissions", "student-files"]);
 
 // 1 GB cap per student in their personal drive.

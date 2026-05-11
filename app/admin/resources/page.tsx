@@ -1,0 +1,126 @@
+import Link from "next/link";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { Card } from "@/components/ui/card";
+import { Plus, FileText, ExternalLink } from "lucide-react";
+
+export const metadata = { title: "Resources · Admin" };
+
+function fmtBytes(n: number | null) {
+  if (!n) return "—";
+  const units = ["B", "KB", "MB", "GB"];
+  let v = n;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toFixed(v >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
+export default async function AdminResourcesPage() {
+  const admin = createAdminClient();
+  const [{ data: resources }, { data: cohorts }] = await Promise.all([
+    admin
+      .from("resources")
+      .select("*, cohort:cohorts(name)")
+      .order("created_at", { ascending: false }),
+    admin.from("cohorts").select("id, name").order("starts_on"),
+  ]);
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Resources</h1>
+          <p className="mt-1 text-sm text-white/55">
+            Shared decks, templates, guides — visible to enrolled students in
+            the chosen cohort (or everyone, if left global).
+          </p>
+        </div>
+        <Link
+          href="/admin/resources/new"
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-spark px-4 text-sm font-semibold text-black hover:bg-spark-200"
+        >
+          <Plus className="h-4 w-4" /> New resource
+        </Link>
+      </div>
+
+      <Card className="mt-6 !p-0 overflow-hidden">
+        {(resources?.length ?? 0) === 0 ? (
+          <p className="p-6 text-sm text-white/55">
+            Nothing here yet. Upload your first resource — try cohort
+            templates, kickoff decks, or recommended reading.
+          </p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-white/40">
+                <th className="px-5 py-3">Title</th>
+                <th className="px-5 py-3">Category</th>
+                <th className="px-5 py-3">Cohort</th>
+                <th className="px-5 py-3">Source</th>
+                <th className="px-5 py-3">Size</th>
+                <th className="px-5 py-3">Added</th>
+                <th className="px-5 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {(resources ?? []).map((r: any) => {
+                const cohort = Array.isArray(r.cohort)
+                  ? r.cohort[0]
+                  : r.cohort;
+                return (
+                  <tr
+                    key={r.id}
+                    className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]"
+                  >
+                    <td className="px-5 py-3 text-white">{r.title}</td>
+                    <td className="px-5 py-3 text-white/60 capitalize">
+                      {r.category}
+                    </td>
+                    <td className="px-5 py-3 text-white/60">
+                      {cohort?.name ?? <span className="text-white/30">All</span>}
+                    </td>
+                    <td className="px-5 py-3 text-white/60">
+                      {r.storage_path ? (
+                        <span className="inline-flex items-center gap-1">
+                          <FileText className="h-3.5 w-3.5" /> File
+                        </span>
+                      ) : r.external_url ? (
+                        <span className="inline-flex items-center gap-1">
+                          <ExternalLink className="h-3.5 w-3.5" /> Link
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-white/60">
+                      {fmtBytes(r.size_bytes)}
+                    </td>
+                    <td className="px-5 py-3 text-white/45">
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <Link
+                        href={`/admin/resources/${r.id}`}
+                        className="text-xs text-spark hover:underline"
+                      >
+                        Edit →
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Card>
+
+      <p className="mt-6 text-xs text-white/40">
+        Tip: leave Cohort empty to make a resource visible to every enrolled
+        student, regardless of cohort.
+      </p>
+      <div className="hidden">{cohorts?.length}</div>
+    </div>
+  );
+}
