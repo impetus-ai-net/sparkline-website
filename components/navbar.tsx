@@ -8,7 +8,6 @@ export default function Navbar() {
     { href: "#how-it-works", label: "Program" },
     { href: "#curriculum", label: "Curriculum" },
     { href: "#compare", label: "Why SparkLine" },
-    { href: "#founders", label: "Team" },
     { href: "#faq", label: "FAQ" },
   ];
 

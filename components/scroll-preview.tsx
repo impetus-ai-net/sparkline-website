@@ -1,7 +1,38 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import {
+  Home,
+  FileText,
+  PlayCircle,
+  ClipboardList,
+  CheckCircle,
+  CalendarDays,
+  FolderArchive,
+  MessagesSquare,
+  Sparkles,
+  FolderOpen,
+  CreditCard,
+  Settings,
+  Bell,
+  ArrowRight,
+} from "lucide-react";
 import { ContainerScroll } from "./container-scroll";
+
+const NAV = [
+  { label: "Home", icon: Home, active: true },
+  { label: "Application", icon: FileText },
+  { label: "Course", icon: PlayCircle },
+  { label: "Assignments", icon: ClipboardList },
+  { label: "Check-in", icon: CheckCircle },
+  { label: "Events", icon: CalendarDays },
+  { label: "Resources", icon: FolderArchive },
+  { label: "Community", icon: MessagesSquare },
+  { label: "AI co-founder", icon: Sparkles },
+  { label: "Files", icon: FolderOpen },
+  { label: "Billing", icon: CreditCard },
+  { label: "Settings", icon: Settings },
+];
 
 export default function ScrollPreview() {
   return (
@@ -13,137 +44,147 @@ export default function ScrollPreview() {
               From idea to <span className="shine">funded startup</span>
             </h2>
             <p className="mt-4 text-base md:text-xl text-white/60 max-w-2xl mx-auto">
-              4 weeks, fully online. Real curriculum, real mentors, real investors on demo day.
+              4 weeks, fully online. A real curriculum, real mentors, real
+              investors on demo day.
             </p>
           </>
         }
       >
-        <div className="relative h-full w-full bg-gradient-to-br from-zinc-900 via-black to-zinc-900 p-6 md:p-10 overflow-hidden">
-          <div className="absolute inset-0 grid-bg opacity-60" />
-          <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-spark/20 blur-3xl" />
+        <div className="relative h-full w-full bg-black overflow-hidden">
+          <div className="absolute inset-0 grid-bg opacity-40" />
+          <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-spark/15 blur-3xl" />
 
-          <div className="relative grid h-full grid-cols-12 gap-4">
-            <aside className="col-span-3 hidden md:flex flex-col gap-2 rounded-2xl border border-white/10 bg-black/40 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Image src="/logo.svg" alt="" width={20} height={20} />
-                <span className="font-semibold text-white text-sm">
-                  Spark<span className="text-spark">Line</span>
-                </span>
-              </div>
-              {[
-                "Dashboard",
-                "Week 1 · Validate",
-                "Week 2 · Build",
-                "Week 3 · Market",
-                "Week 4 · Pitch",
-                "Mentors",
-                "Investor Day",
-                "Community",
-              ].map((s, i) => (
-                <div
-                  key={s}
-                  className={`text-xs px-3 py-2 rounded-lg ${
-                    i === 1
-                      ? "bg-spark/15 text-spark border border-spark/30"
-                      : "text-white/60 hover:bg-white/5"
-                  }`}
-                >
-                  {s}
+          <div className="relative grid h-full grid-cols-12 gap-0 text-left">
+            {/* Sidebar — matches the real /dashboard sidebar */}
+            <aside className="col-span-3 hidden md:flex h-full flex-col border-r border-white/10 bg-zinc-950/50 px-3 py-4">
+              <div className="mb-6 flex items-center justify-between px-2">
+                <div className="flex items-center gap-2">
+                  <Image src="/logo.svg" alt="" width={20} height={20} />
+                  <span className="font-semibold tracking-tight text-white text-sm">
+                    Spark<span className="text-spark">Line</span>
+                  </span>
                 </div>
-              ))}
+                <div className="relative">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 text-white/70">
+                    <Bell className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="absolute -right-1 -top-1 flex h-3 min-w-3 items-center justify-center rounded-full bg-spark px-1 text-[8px] font-bold text-black">
+                    2
+                  </span>
+                </div>
+              </div>
+              <nav className="space-y-0.5">
+                {NAV.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.label}
+                      className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs ${
+                        item.active
+                          ? "bg-spark/10 text-spark"
+                          : "text-white/55"
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {item.label}
+                    </div>
+                  );
+                })}
+              </nav>
             </aside>
 
-            <main className="col-span-12 md:col-span-9 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-spark">
-                    Week 1
+            {/* Main content — mirrors /dashboard/page.tsx layout */}
+            <main className="col-span-12 md:col-span-9 h-full overflow-hidden px-5 py-5 md:px-10 md:py-8">
+              <div>
+                <h3 className="text-xl md:text-3xl font-bold tracking-tight text-white">
+                  Welcome, Riya.
+                </h3>
+                <p className="mt-1 text-xs md:text-sm text-white/50">
+                  Here's where your SparkLine journey lives.
+                </p>
+              </div>
+
+              <div className="mt-6 md:mt-8 grid gap-4 md:grid-cols-2">
+                {/* Application card */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-white/45">
+                        Application
+                      </h4>
+                      <p className="mt-2 text-xl md:text-2xl font-semibold text-white">
+                        Accepted
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-spark/40 bg-spark/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-spark">
+                      Accepted
+                    </span>
+                  </div>
+                  <div className="mt-5">
+                    <button className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-spark px-3.5 text-xs font-semibold text-black">
+                      Pay $97 to enroll
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Course access card */}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <h4 className="text-[10px] md:text-xs font-medium uppercase tracking-wider text-white/45">
+                    Course access
+                  </h4>
+                  <p className="mt-2 text-xl md:text-2xl font-semibold text-white">
+                    Summer 2026
                   </p>
-                  <h3 className="text-xl md:text-2xl font-bold text-white">
-                    Validate your idea
-                  </h3>
-                </div>
-                <div className="hidden md:flex items-center gap-2 text-xs text-white/50">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  Cohort Live · 24 students
+                  <p className="mt-1 text-xs text-white/45">
+                    2026-06-15 → 2026-07-13
+                  </p>
+                  <div className="mt-5">
+                    <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3.5 text-xs font-semibold text-white">
+                      Open course
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { k: "Students", v: "24" },
-                  { k: "Mentors", v: "3" },
-                  { k: "Investors", v: "8" },
-                  { k: "Funded so far", v: "$0 → ?" },
-                ].map((s) => (
-                  <div
-                    key={s.k}
-                    className="rounded-xl border border-white/10 bg-white/5 p-3"
-                  >
-                    <div className="text-[10px] uppercase tracking-widest text-white/40">
-                      {s.k}
-                    </div>
-                    <div className="text-lg font-bold text-white mt-0.5">
-                      {s.v}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1">
-                {[
-                  {
-                    title: "Lean Canvas",
-                    body: "Map your problem, customer, and unique value in one page.",
-                    pct: 78,
-                  },
-                  {
-                    title: "Customer Discovery",
-                    body: "Run 10 problem interviews. Ship insights to the cohort.",
-                    pct: 42,
-                  },
-                  {
-                    title: "Problem/Solution Fit",
-                    body: "Pressure-test your hypothesis with peer + mentor review.",
-                    pct: 12,
-                  },
-                ].map((c) => (
-                  <div
-                    key={c.title}
-                    className="rounded-xl border border-white/10 bg-zinc-900/80 p-4 flex flex-col"
-                  >
-                    <div className="text-sm font-semibold text-white">
-                      {c.title}
-                    </div>
-                    <p className="text-xs text-white/50 mt-1 flex-1">{c.body}</p>
-                    <div className="mt-3">
-                      <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                        <div
-                          className="h-full bg-spark"
-                          style={{ width: `${c.pct}%` }}
-                        />
-                      </div>
-                      <div className="mt-1.5 flex items-center justify-between text-[10px] text-white/40">
-                        <span>{c.pct}% complete</span>
-                        <span>Due Sun</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="rounded-xl border border-spark/20 bg-spark/5 p-4 flex items-center justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-widest text-spark">
-                    Demo Day
-                  </div>
-                  <div className="text-sm text-white mt-0.5">
-                    Pitch live to angel investors · Week 4 · Friday 7pm ET
-                  </div>
+              {/* Quick links row */}
+              <div className="mt-6 md:mt-8">
+                <h4 className="text-sm font-semibold text-white">
+                  Quick links
+                </h4>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[
+                    "View application",
+                    "Billing",
+                    "Settings",
+                    "Community",
+                  ].map((label) => (
+                    <span
+                      key={label}
+                      className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] text-white/75"
+                    >
+                      {label}
+                    </span>
+                  ))}
                 </div>
-                <span className="hidden md:inline rounded-full bg-spark px-3 py-1.5 text-xs font-semibold text-black">
-                  Save your seat
-                </span>
+              </div>
+
+              {/* Recent activity rail */}
+              <div className="mt-6 hidden md:block rounded-xl border border-spark/20 bg-spark/[0.04] p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-spark">
+                      This week
+                    </div>
+                    <div className="mt-0.5 text-sm text-white">
+                      Week 1 · Customer discovery interviews due Sunday
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-spark px-3 py-1.5 text-xs font-semibold text-black">
+                    Open
+                  </span>
+                </div>
               </div>
             </main>
           </div>
