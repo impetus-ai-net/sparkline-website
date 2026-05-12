@@ -6,10 +6,19 @@ export const metadata = { title: "Cohorts · Admin" };
 
 export default async function AdminCohortsPage() {
   const admin = createAdminClient();
-  const { data: cohorts } = await admin
+  // Order by cohort_number when the column exists (migration 0017),
+  // otherwise fall back to chronological order so the page still
+  // renders pre-migration.
+  let { data: cohorts, error } = await admin
     .from("cohorts")
     .select("*, enrollments(count)")
-    .order("starts_on", { ascending: true });
+    .order("cohort_number", { ascending: true, nullsFirst: false });
+  if (error && /column .*cohort_number.* does not exist/i.test(error.message)) {
+    ({ data: cohorts } = await admin
+      .from("cohorts")
+      .select("*, enrollments(count)")
+      .order("starts_on", { ascending: true, nullsFirst: false }));
+  }
 
   return (
     <div className="mx-auto max-w-5xl">

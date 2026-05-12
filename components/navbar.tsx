@@ -5,20 +5,20 @@ export default function Navbar() {
   const links = [
     { href: "#how-it-works", label: "Program" },
     { href: "#curriculum", label: "Curriculum" },
-    { href: "#compare", label: "Why SparkLine" },
+    { href: "#compare", label: "Compare" },
     { href: "#faq", label: "FAQ" },
   ];
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 px-4 pt-4 animate-slide-down">
-      <nav className="mx-auto max-w-6xl flex items-center justify-between rounded-2xl border border-white/10 bg-black/50 backdrop-blur-xl px-4 py-2.5">
-        <a href="/" className="flex items-center gap-2.5 press rounded-lg">
-          <Image src="/logo.svg" alt="SparkLine" width={28} height={28} priority />
-          <span className="text-white font-semibold tracking-tight text-lg">
+    <header className="fixed top-0 inset-x-0 z-50 border-b border-white/10 bg-black/90">
+      <nav className="mx-auto max-w-6xl flex items-center justify-between px-6 py-3.5">
+        <a href="/" className="press flex items-center gap-2.5">
+          <Image src="/logo.svg" alt="SparkLine" width={26} height={26} priority />
+          <span className="text-white font-semibold tracking-tight text-[17px]">
             Spark<span className="text-spark">Line</span>
           </span>
         </a>
-        <ul className="hidden md:flex items-center gap-7 text-sm text-white/70">
+        <ul className="hidden md:flex items-center gap-8 text-[13px] font-medium text-white/70">
           {links.map((l) => (
             <li key={l.href}>
               <a
@@ -30,19 +30,19 @@ export default function Navbar() {
             </li>
           ))}
         </ul>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <a
             href="/login"
-            className="press hidden sm:inline-block text-sm text-white/60 hover:text-white rounded px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spark"
+            className="press hidden sm:inline-block text-[13px] font-medium text-white/65 hover:text-white"
           >
             Log in
           </a>
           <a
             href="/apply"
-            className="press group relative inline-flex items-center gap-1.5 rounded-full bg-spark px-4 py-2 text-sm font-semibold text-black hover:bg-spark-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spark"
+            className="press inline-flex items-center gap-1.5 rounded-md bg-spark px-3.5 py-1.5 text-[13px] font-semibold text-black hover:bg-spark-200"
           >
             Apply
-            <span aria-hidden className="transition-transform duration-100 group-hover:translate-x-0.5">→</span>
+            <span aria-hidden>→</span>
           </a>
         </div>
       </nav>

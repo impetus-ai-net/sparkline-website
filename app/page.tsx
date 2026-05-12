@@ -9,6 +9,7 @@ import Comparison from "@/components/comparison";
 import FAQ from "@/components/faq";
 import CTA from "@/components/cta";
 import Footer from "@/components/footer";
+import { getSiteConfig } from "@/lib/site-config";
 
 // Scroll-preview is the only piece left that pulls framer-motion's
 // scroll-linked APIs + a wide lucide icon set. It's below the fold, so we
@@ -18,20 +19,21 @@ const ScrollPreview = dynamic(() => import("@/components/scroll-preview"), {
   loading: () => <div aria-hidden className="h-[60rem] md:h-[80rem]" />,
 });
 
-export default function Home() {
+export default async function Home() {
+  const config = await getSiteConfig();
   return (
     <main className="relative min-h-screen overflow-hidden bg-black">
       <Navbar />
-      <Hero />
+      <Hero config={config} />
       <Marquee />
       <Problem />
-      <ScrollPreview />
+      <ScrollPreview config={config} />
       <Curriculum />
-      <Stats />
-      <Comparison />
-      <FAQ />
-      <CTA />
-      <Footer />
+      <Stats config={config} />
+      <Comparison config={config} />
+      <FAQ config={config} />
+      <CTA config={config} />
+      <Footer config={config} />
     </main>
   );
 }

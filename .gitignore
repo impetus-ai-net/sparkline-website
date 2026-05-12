@@ -6,5 +6,6 @@ out
 .DS_Store
 *.log
 .vercel
+.claude
 supabase/.temp
 *.tsbuildinfo

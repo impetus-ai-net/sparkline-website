@@ -1,8 +1,14 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getSiteConfig, type SiteConfig } from "@/lib/site-config";
 
-export default function Footer() {
+// Footer can take an explicit config (lets a page render in a single
+// pass without re-querying) or self-resolve when used inside a layout
+// that doesn't already have one.
+export default async function Footer({ config }: { config?: SiteConfig }) {
+  const resolved = config ?? (await getSiteConfig());
+  const contactEmail = resolved.settings.contactEmail;
   return (
     <footer className="relative border-t border-white/10 px-6 py-14">
       <div className="mx-auto max-w-6xl grid gap-10 md:grid-cols-4">
@@ -13,12 +19,13 @@ export default function Footer() {
               Spark<span className="text-spark">Line</span>
             </span>
           </div>
-          <p className="mt-4 max-w-sm text-sm text-white/50 leading-relaxed">
-            The 4-week, fully virtual startup accelerator for high schoolers.
-            Build real. Pitch real. Get funded — before graduation.
+          <p className="mt-4 max-w-sm text-sm text-white/70 leading-relaxed">
+            A 4-week, fully virtual startup accelerator for U.S. high
+            schoolers. Built around real customer discovery, real mentors,
+            and a Demo Day that ends with real angel investors.
           </p>
-          <p className="mt-4 text-xs text-white/30">
-            sparklineyouth.org · Plainsboro, NJ
+          <p className="mt-5 text-xs text-white/45">
+            sparklineyouth.org · Built in Plainsboro, NJ
           </p>
         </div>
 
@@ -69,10 +76,10 @@ export default function Footer() {
           <ul className="mt-4 space-y-2.5 text-sm text-white/70">
             <li>
               <a
-                href="mailto:sparkline.youth@gmail.com"
+                href={`mailto:${contactEmail}`}
                 className="rounded hover:text-spark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-spark"
               >
-                sparkline.youth@gmail.com
+                {contactEmail}
               </a>
             </li>
             <li>

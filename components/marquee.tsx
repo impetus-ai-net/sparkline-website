@@ -1,5 +1,7 @@
 import React from "react";
 
+// A subdued curriculum strip — restrained tracking, no decorative sparkles,
+// stronger contrast so the words read like a manifest, not chrome.
 const items = [
   "Lean Canvas",
   "Customer Discovery",
@@ -17,15 +19,18 @@ export default function Marquee() {
   return (
     <section
       aria-hidden
-      className="relative overflow-hidden border-y border-white/5 py-6 bg-black"
+      className="relative overflow-hidden border-y border-white/10 py-5 bg-black"
     >
-      <div className="flex animate-marquee gap-12 whitespace-nowrap will-change-transform">
+      <div className="flex animate-marquee gap-10 whitespace-nowrap will-change-transform">
         {[...items, ...items].map((s, i) => (
           <span
             key={`${s}-${i}`}
-            className="text-sm md:text-base font-medium uppercase tracking-[0.18em] text-white/30"
+            className="text-sm font-medium uppercase tracking-[0.22em] text-white/45"
           >
-            {s} <span className="text-spark/60 ml-12">✦</span>
+            {s}
+            <span aria-hidden className="ml-10 text-white/15">
+              /
+            </span>
           </span>
         ))}
       </div>

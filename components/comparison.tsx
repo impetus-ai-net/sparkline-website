@@ -1,155 +1,192 @@
 import React from "react";
-import { Check, X } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
+import type { SiteConfig } from "@/lib/site-config";
 
-const rows = [
-  {
-    program: "LaunchX",
-    cost: "$3,000–$8,000",
-    investors: true,
-    virtual: "partial",
-    yearRound: false,
-  },
-  {
-    program: "LeanGap",
-    cost: "Varies",
-    investors: true,
-    virtual: "partial",
-    yearRound: false,
-  },
-  {
-    program: "YEA!",
-    cost: "School-based",
-    investors: "panel",
-    virtual: false,
-    yearRound: "academic",
-  },
-  {
-    program: "SparkLine",
-    cost: "$97",
-    investors: true,
-    virtual: true,
-    yearRound: true,
-    highlight: true,
-  },
-];
+type Row = {
+  program: string;
+  cost: string;
+  investors: boolean | string;
+  virtual: boolean | string;
+  yearRound: boolean | string;
+  highlight?: boolean;
+};
 
-function Cell({ value }: { value: any }) {
-  if (value === true)
+function ValueCell({ value }: { value: any }) {
+  if (value === true) {
     return (
-      <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-spark/15 border border-spark/30">
-        <Check className="h-4 w-4 text-spark" />
+      <span className="inline-flex items-center gap-1.5 text-[13px] text-white/85">
+        <Check className="h-3.5 w-3.5 text-spark" />
+        Yes
       </span>
     );
-  if (value === false)
+  }
+  if (value === false) {
     return (
-      <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-red-500/10 border border-red-500/30">
-        <X className="h-4 w-4 text-red-400" />
+      <span className="inline-flex items-center gap-1.5 text-[13px] text-white/45">
+        <Minus className="h-3.5 w-3.5 text-white/30" />
+        No
       </span>
     );
-  if (value === "partial")
-    return (
-      <span className="text-xs text-amber-300/80 px-2 py-1 rounded-full border border-amber-300/20 bg-amber-300/5">
-        Partial
-      </span>
-    );
-  if (value === "panel")
-    return (
-      <span className="text-xs text-amber-300/80 px-2 py-1 rounded-full border border-amber-300/20 bg-amber-300/5">
-        Panel only
-      </span>
-    );
-  if (value === "academic")
-    return (
-      <span className="text-xs text-amber-300/80 px-2 py-1 rounded-full border border-amber-300/20 bg-amber-300/5">
-        Academic year
-      </span>
-    );
-  return <span className="text-white/70 text-sm">{value}</span>;
+  }
+  return <span className="text-[13px] text-white/70">{value}</span>;
 }
 
-export default function Comparison() {
+export default function Comparison({ config }: { config: SiteConfig }) {
+  const rows: Row[] = [
+    {
+      program: "LaunchX",
+      cost: "$3,000–$8,000",
+      investors: true,
+      virtual: "Partial",
+      yearRound: false,
+    },
+    {
+      program: "LeanGap",
+      cost: "Varies",
+      investors: true,
+      virtual: "Partial",
+      yearRound: false,
+    },
+    {
+      program: "YEA!",
+      cost: "School-based",
+      investors: "Panel only",
+      virtual: false,
+      yearRound: "Academic year",
+    },
+    {
+      program: "SparkLine",
+      cost: config.derived.priceLabel,
+      investors: true,
+      virtual: true,
+      yearRound: true,
+      highlight: true,
+    },
+  ];
+
   return (
-    <section id="compare" className="relative py-16 md:py-32 px-6">
+    <section id="compare" className="relative py-20 md:py-32 px-6">
       <div className="mx-auto max-w-6xl">
-        <Reveal className="text-center max-w-3xl mx-auto">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-spark">
+        <Reveal className="max-w-2xl">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-spark">
             Why SparkLine
           </p>
-          <h2 className="mt-3 text-4xl md:text-5xl font-bold tracking-tight text-white">
-            Affordable. Virtual. <span className="shine">Real investors.</span>
+          <h2 className="mt-3 text-4xl md:text-5xl font-bold tracking-[-0.02em] text-white leading-[1.05]">
+            Affordable. Virtual. Real investors.
           </h2>
-          <p className="mt-5 text-lg text-white/60">
-            No other program offers all four: affordable, year-round
-            cohorts, fully virtual, and real angel investors on demo day.
+          <p className="mt-5 text-[17px] text-white/75 leading-relaxed">
+            Four axes worth comparing: cost, who you pitch, whether it
+            actually runs online, and whether you can join when it fits
+            your year.
           </p>
         </Reveal>
 
+        {/* Desktop table */}
         <Reveal
-          delay={100}
-          className="relative mt-14 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-transparent"
+          delay={80}
+          className="relative mt-12 hidden overflow-hidden rounded-xl border border-white/10 md:block"
         >
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-white/10 text-xs uppercase tracking-wider text-white/40">
-                  <th className="px-6 py-5 font-medium">Program</th>
-                  <th className="px-6 py-5 font-medium">Cost</th>
-                  <th className="px-6 py-5 font-medium">Real Investors</th>
-                  <th className="px-6 py-5 font-medium">Virtual</th>
-                  <th className="px-6 py-5 font-medium">Year-Round</th>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/[0.02] text-[11px] uppercase tracking-[0.2em] text-white/45">
+                <th className="px-6 py-4 font-medium">Program</th>
+                <th className="px-6 py-4 font-medium">Cost</th>
+                <th className="px-6 py-4 font-medium">Real investors</th>
+                <th className="px-6 py-4 font-medium">Virtual</th>
+                <th className="px-6 py-4 font-medium">Year-round</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr
+                  key={r.program}
+                  className={`border-b border-white/5 last:border-b-0 ${
+                    r.highlight ? "bg-spark/[0.04]" : ""
+                  }`}
+                >
+                  <td className="px-6 py-5">
+                    <span
+                      className={`text-[15px] font-semibold ${
+                        r.highlight ? "text-spark" : "text-white"
+                      }`}
+                    >
+                      {r.program}
+                    </span>
+                  </td>
+                  <td className="px-6 py-5">
+                    <span
+                      className={
+                        r.highlight
+                          ? "text-[15px] font-semibold text-spark"
+                          : "text-[15px] text-white/75"
+                      }
+                    >
+                      {r.cost}
+                    </span>
+                  </td>
+                  <td className="px-6 py-5">
+                    <ValueCell value={r.investors} />
+                  </td>
+                  <td className="px-6 py-5">
+                    <ValueCell value={r.virtual} />
+                  </td>
+                  <td className="px-6 py-5">
+                    <ValueCell value={r.yearRound} />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr
-                    key={r.program}
-                    className={`border-b border-white/5 last:border-b-0 ${
-                      r.highlight
-                        ? "bg-spark/[0.06] relative"
-                        : "hover:bg-white/[0.02]"
-                    }`}
-                  >
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        {r.highlight && (
-                          <span className="h-2 w-2 rounded-full bg-spark animate-pulse" />
-                        )}
-                        <span
-                          className={`font-semibold ${
-                            r.highlight ? "text-spark" : "text-white"
-                          }`}
-                        >
-                          {r.program}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <span
-                        className={
-                          r.highlight
-                            ? "text-spark font-bold text-lg"
-                            : "text-white/70"
-                        }
-                      >
-                        {r.cost}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <Cell value={r.investors} />
-                    </td>
-                    <td className="px-6 py-5">
-                      <Cell value={r.virtual} />
-                    </td>
-                    <td className="px-6 py-5">
-                      <Cell value={r.yearRound} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </Reveal>
+
+        {/* Mobile stacked cards — keeps comparison readable without a
+         * cramped scrolling table. */}
+        <div className="mt-10 grid gap-3 md:hidden">
+          {rows.map((r) => (
+            <div
+              key={r.program}
+              className={`rounded-xl border p-5 ${
+                r.highlight
+                  ? "border-spark/40 bg-spark/[0.04]"
+                  : "border-white/10 bg-white/[0.02]"
+              }`}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span
+                  className={`text-base font-semibold ${
+                    r.highlight ? "text-spark" : "text-white"
+                  }`}
+                >
+                  {r.program}
+                </span>
+                <span
+                  className={
+                    r.highlight
+                      ? "text-base font-semibold text-spark"
+                      : "text-sm text-white/75"
+                  }
+                >
+                  {r.cost}
+                </span>
+              </div>
+              <dl className="mt-4 grid grid-cols-3 gap-x-3 gap-y-2 text-[12px]">
+                <dt className="text-white/45">Investors</dt>
+                <dd className="col-span-2">
+                  <ValueCell value={r.investors} />
+                </dd>
+                <dt className="text-white/45">Virtual</dt>
+                <dd className="col-span-2">
+                  <ValueCell value={r.virtual} />
+                </dd>
+                <dt className="text-white/45">Year-round</dt>
+                <dd className="col-span-2">
+                  <ValueCell value={r.yearRound} />
+                </dd>
+              </dl>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

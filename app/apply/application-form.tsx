@@ -92,9 +92,11 @@ type SaveStatus =
 export function ApplicationForm({
   defaults,
   email,
+  priceLabel = "$97",
 }: {
   defaults: Application | null;
   email: string;
+  priceLabel?: string;
 }) {
   const [step, setStep] = useState(1);
   const [submitPending, startSubmit] = useTransition();
@@ -497,7 +499,8 @@ export function ApplicationForm({
           <div className="rounded-xl border border-spark/30 bg-spark/5 p-4 text-sm text-white/70">
             Submitting moves your application to{" "}
             <span className="text-white">review</span>. You won't be charged
-            anything yet — payment ($97) only happens after we accept you.
+            anything yet — payment ({priceLabel}) only happens after we accept
+            you.
           </div>
         </div>
       )}

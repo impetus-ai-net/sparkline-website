@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, StatusBadge } from "@/components/ui/card";
 import { ReviewActions } from "./review-actions";
 import { AiScreenButton } from "./ai-screen-button";
+import { getSiteConfig } from "@/lib/site-config";
 
 export const metadata = { title: "Review application · Admin" };
 
@@ -13,11 +14,16 @@ export default async function AdminApplicationDetail({
   params: { id: string };
 }) {
   const admin = createAdminClient();
-  const { data: app } = await admin
-    .from("applications")
-    .select("*, cohort:cohorts(*), profile:profiles!applications_user_id_fkey(email, full_name)")
-    .eq("id", params.id)
-    .maybeSingle();
+  const [{ data: app }, siteConfig] = await Promise.all([
+    admin
+      .from("applications")
+      .select(
+        "*, cohort:cohorts(*), profile:profiles!applications_user_id_fkey(email, full_name)",
+      )
+      .eq("id", params.id)
+      .maybeSingle(),
+    getSiteConfig(),
+  ]);
 
   if (!app) notFound();
 
@@ -140,6 +146,7 @@ export default async function AdminApplicationDetail({
           status={app.status}
           feeWaived={Boolean((app as any).fee_waived)}
           initialNotes={app.review_notes ?? ""}
+          priceLabel={siteConfig.derived.priceLabel}
         />
       </Card>
     </div>

@@ -61,4 +61,6 @@ export async function saveSiteSettings(input: SiteSettingsInput) {
   });
   revalidatePath("/admin/settings");
   revalidatePath("/");
+  revalidatePath("/apply");
+  revalidatePath("/opengraph-image");
 }

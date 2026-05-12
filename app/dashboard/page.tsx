@@ -8,10 +8,13 @@ import { ReferralCard } from "./referral-card";
 import { ChargePayButton } from "@/components/charge-pay-button";
 import { env } from "@/lib/env";
 import { AlertCircle } from "lucide-react";
+import { getSiteConfig } from "@/lib/site-config";
 
 export default async function DashboardHome() {
   const user = await requireUser();
   const supabase = createClient();
+  const siteConfig = await getSiteConfig();
+  const priceLabel = siteConfig.derived.priceLabel;
 
   const [
     { data: profile },
@@ -118,7 +121,7 @@ export default async function DashboardHome() {
             )}
             {app?.status === "accepted" && (
               <Link href="/dashboard/application">
-                <Button>Pay $97 to enroll</Button>
+                <Button>Pay {priceLabel} to enroll</Button>
               </Link>
             )}
             {app?.status === "rejected" && (

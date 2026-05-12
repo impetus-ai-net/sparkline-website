@@ -137,6 +137,7 @@ export default async function ApplyPage() {
           <ApplicationForm
             defaults={existing ?? null}
             email={user.email ?? ""}
+            priceLabel={`$${priceDollars}`}
           />
         </div>
         <div className="mt-10">

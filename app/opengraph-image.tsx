@@ -1,13 +1,20 @@
 import { ImageResponse } from "next/og";
+import { getSiteConfig } from "@/lib/site-config";
 
 // Route segment config for the OG image. Next.js picks these up to build
-// the actual /opengraph-image route + metadata.
-export const runtime = "edge";
+// the actual /opengraph-image route + metadata. Runs on Node so we can
+// share the Supabase admin client with the rest of the server. Marked
+// dynamic so the active cohort is resolved at request time — saving the
+// admin settings invalidates this route via revalidatePath.
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const alt = "SparkLine — The Startup Accelerator for High Schoolers";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default async function OpengraphImage() {
+  const { derived } = await getSiteConfig();
+  const headline = `${derived.cohortHeadline} · ${derived.priceLabel}`;
   return new ImageResponse(
     (
       <div
@@ -18,8 +25,9 @@ export default async function OpengraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "72px",
-          background:
-            "radial-gradient(ellipse at top, rgba(250,204,21,0.22), rgba(0,0,0,1) 60%), #000000",
+          backgroundColor: "#000000",
+          backgroundImage:
+            "radial-gradient(ellipse at top, rgba(250,204,21,0.22), rgba(0,0,0,1) 60%)",
           color: "#ffffff",
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
         }}
@@ -48,7 +56,7 @@ export default async function OpengraphImage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div
             style={{
-              display: "inline-flex",
+              display: "flex",
               alignSelf: "flex-start",
               padding: "8px 16px",
               borderRadius: 999,
@@ -59,7 +67,7 @@ export default async function OpengraphImage() {
               fontWeight: 500,
             }}
           >
-            Cohort 1 · Summer 2026 · $97
+            {headline}
           </div>
           <div
             style={{

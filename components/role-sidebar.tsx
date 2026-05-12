@@ -1,17 +1,18 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { LogOut, ShieldCheck } from "lucide-react";
 import type { Role } from "@/lib/types";
-import { INVESTOR_NAV } from "@/lib/nav-config";
+import { INVESTOR_NAV_GROUPS } from "@/lib/nav-config";
+import type { NavGroup } from "@/lib/nav-config";
 import { NotificationBell } from "@/components/notification-bell";
+import { SidebarNav } from "@/components/sidebar-nav";
 
 export type RoleSidebarKind = "investor";
 
-const NAV_BY_KIND = {
-  investor: INVESTOR_NAV,
-} as const;
+const GROUPS_BY_KIND: Record<RoleSidebarKind, NavGroup[]> = {
+  investor: INVESTOR_NAV_GROUPS,
+};
 
 const LABEL_BY_KIND: Record<RoleSidebarKind, string> = {
   investor: "Investor",
@@ -30,8 +31,7 @@ export function RoleSidebar({
   kind: RoleSidebarKind;
   role: Role;
 }) {
-  const pathname = usePathname();
-  const items = NAV_BY_KIND[kind];
+  const groups = GROUPS_BY_KIND[kind];
   const label = LABEL_BY_KIND[kind];
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-white/10 bg-zinc-950/40 px-4 py-6">
@@ -44,42 +44,21 @@ export function RoleSidebar({
         </Link>
         <NotificationBell align="right" />
       </div>
-      <p className="mb-6 px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-spark">
+      <p className="mb-4 px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-spark">
         {label}
       </p>
-      <nav className="flex-1 space-y-1">
-        {items.map((it) => {
-          const active = it.exact
-            ? pathname === it.href
-            : pathname?.startsWith(it.href);
-          const Icon = it.icon;
-          return (
-            <Link
-              key={it.href}
-              href={it.href}
-              className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
-                active
-                  ? "bg-spark/10 text-spark"
-                  : "text-white/60 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {it.label}
-            </Link>
-          );
-        })}
-        {role === "admin" && (
-          <div className="mt-6 space-y-1 border-t border-white/10 pt-4">
-            <Link
-              href="/admin"
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-spark/80 hover:bg-spark/10 hover:text-spark"
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Admin panel
-            </Link>
-          </div>
-        )}
-      </nav>
+      <SidebarNav storageKey={`role-${kind}`} groups={groups} />
+      {role === "admin" && (
+        <div className="mt-4 space-y-1 border-t border-white/10 pt-4">
+          <Link
+            href="/admin"
+            className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-spark/80 hover:bg-spark/10 hover:text-spark"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Admin panel
+          </Link>
+        </div>
+      )}
       <form action="/auth/signout" method="post" className="mt-4">
         <button
           type="submit"

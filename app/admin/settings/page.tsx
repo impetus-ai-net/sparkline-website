@@ -1,7 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { SettingsForm } from "./settings-form";
+import { ThemeToggle } from "@/app/dashboard/settings/theme-toggle";
+import { requireUser } from "@/lib/auth";
 import type { SiteSettingsInput } from "./actions";
+import type { Theme } from "@/lib/types";
 
 export const metadata = { title: "Settings · Admin" };
 
@@ -19,13 +23,18 @@ const DEFAULTS: SiteSettingsInput = {
 
 export default async function AdminSettingsPage() {
   const admin = createAdminClient();
-  const [{ data: rows }, { data: cohorts }] = await Promise.all([
-    admin.from("site_settings").select("*"),
-    admin
-      .from("cohorts")
-      .select("id, name, status")
-      .order("starts_on", { ascending: false }),
-  ]);
+  const supabase = createClient();
+  const user = await requireUser();
+  const [{ data: rows }, { data: cohorts }, { data: profile }] =
+    await Promise.all([
+      admin.from("site_settings").select("*"),
+      admin
+        .from("cohorts")
+        .select("id, name, status")
+        .order("starts_on", { ascending: false }),
+      supabase.from("profiles").select("theme").eq("id", user.id).single(),
+    ]);
+  const theme: Theme = profile?.theme === "light" ? "light" : "dark";
 
   const raw: Record<string, any> = {};
   for (const r of rows ?? []) raw[r.key] = r.value;
@@ -65,6 +74,18 @@ export default async function AdminSettingsPage() {
       <p className="mt-1 text-sm text-white/50">
         Public-facing site config. Changes apply immediately.
       </p>
+
+      <Card className="mt-6">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-white/55">
+          Appearance
+        </h2>
+        <p className="mb-4 text-sm text-white/60">
+          Switch the admin shell between light and dark mode. Applies across
+          your account on every device you sign in to.
+        </p>
+        <ThemeToggle initial={theme} />
+      </Card>
+
       <Card className="mt-6">
         <SettingsForm initial={initial} cohorts={cohorts ?? []} />
       </Card>

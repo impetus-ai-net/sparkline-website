@@ -26,4 +26,11 @@ export async function setTheme(theme: Theme) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
+  // Admin and other staff shells share the same root layout, so the
+  // cookie change applies — but revalidate the admin tree explicitly so
+  // a staff user toggling from /admin/settings sees the new theme
+  // without a hard reload.
+  revalidatePath("/admin");
+  revalidatePath("/mentor");
+  revalidatePath("/investor");
 }

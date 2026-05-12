@@ -22,6 +22,7 @@ async function ensureAdmin() {
 export type CohortInput = {
   id?: string;
   name: string;
+  cohort_number?: number | null;
   starts_on?: string | null;
   ends_on?: string | null;
   capacity: number;
@@ -100,7 +101,7 @@ export async function saveCohort(input: CohortInput) {
   await ensureAdmin();
   const admin = createAdminClient();
 
-  const payload = {
+  const basePayload = {
     name: input.name,
     starts_on: input.starts_on || null,
     ends_on: input.ends_on || null,
@@ -108,10 +109,25 @@ export async function saveCohort(input: CohortInput) {
     status: input.status,
     price_cents: input.price_cents,
   };
+  // cohort_number is a newer column (migration 0017). Carry it as an
+  // optional field so the action keeps working if the migration hasn't
+  // been applied yet — the catch block below retries without it.
+  const payload: Record<string, any> = { ...basePayload };
+  if (input.cohort_number !== undefined && input.cohort_number !== null) {
+    payload.cohort_number = input.cohort_number;
+  }
 
   let cohortId = input.id ?? null;
   let existingProductId: string | null = null;
   let existingPriceId: string | null = null;
+
+  // Postgrest returns a "column does not exist" error when an unmigrated
+  // optional column (here: cohort_number) is referenced. Strip it and
+  // retry once so the action degrades gracefully.
+  function isUnknownColumnError(err: any) {
+    const msg = String(err?.message ?? err);
+    return /column .*cohort_number.* does not exist/i.test(msg);
+  }
 
   if (cohortId) {
     const { data: existing, error: fetchErr } = await admin
@@ -123,17 +139,30 @@ export async function saveCohort(input: CohortInput) {
     existingProductId = existing?.stripe_product_id ?? null;
     existingPriceId = existing?.stripe_price_id ?? null;
 
-    const { error } = await admin
+    let { error } = await admin
       .from("cohorts")
       .update(payload)
       .eq("id", cohortId);
+    if (error && isUnknownColumnError(error)) {
+      ({ error } = await admin
+        .from("cohorts")
+        .update(basePayload)
+        .eq("id", cohortId));
+    }
     if (error) throw new Error(error.message);
   } else {
-    const { data: created, error } = await admin
+    let { data: created, error } = await admin
       .from("cohorts")
       .insert(payload)
       .select("id")
       .single();
+    if (error && isUnknownColumnError(error)) {
+      ({ data: created, error } = await admin
+        .from("cohorts")
+        .insert(basePayload)
+        .select("id")
+        .single());
+    }
     if (error) throw new Error(error.message);
     cohortId = created!.id;
   }
@@ -167,6 +196,11 @@ export async function saveCohort(input: CohortInput) {
   });
 
   revalidatePath("/admin/cohorts");
+  // Marketing surfaces read the active cohort — invalidate them so a
+  // dates/price/capacity edit shows up immediately.
+  revalidatePath("/");
+  revalidatePath("/apply");
+  revalidatePath("/opengraph-image");
 }
 
 export async function deleteCohort(id: string) {
@@ -204,4 +238,7 @@ export async function deleteCohort(id: string) {
   revalidatePath("/admin/applications");
   revalidatePath("/admin/students");
   revalidatePath("/admin/teams");
+  revalidatePath("/");
+  revalidatePath("/apply");
+  revalidatePath("/opengraph-image");
 }

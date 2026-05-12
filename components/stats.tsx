@@ -1,28 +1,51 @@
 import React from "react";
-import { Reveal } from "@/components/ui/reveal";
+import type { SiteConfig } from "@/lib/site-config";
 
-// Each stat should anchor a concrete fact about the program (not market
-// sizing) so first-time visitors read it as social proof, not pitch deck.
-const stats = [
-  { v: "24", k: "Seats per cohort", sub: "Capped on purpose — feedback over scale" },
-  { v: "$97", k: "Cohort tuition", sub: "vs. $3K–$8K elsewhere" },
-  { v: "4 wks", k: "Idea → investor pitch", sub: "Structured, deliverable-driven" },
-  { v: "100%", k: "Virtual", sub: "Open to any U.S. teen, 13–18" },
-];
+export default function Stats({ config }: { config: SiteConfig }) {
+  const { derived } = config;
 
-export default function Stats() {
+  const supporting = [
+    {
+      v: derived.capacityLabel,
+      k: "Seats per cohort",
+      sub: "Capped on purpose",
+    },
+    { v: "4 wks", k: "Idea → pitch", sub: "Structured deliverables" },
+    { v: "100%", k: "Virtual", sub: "Open to U.S. teens" },
+  ];
+
   return (
-    <section className="relative py-16 md:py-24 px-6 border-y border-white/5">
-      <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 md:gap-10">
-        {stats.map((s, i) => (
-          <Reveal key={s.k} delay={i * 80} className="text-center">
-            <div className="text-4xl md:text-6xl font-black tracking-tighter shine">
-              {s.v}
+    <section className="relative border-y border-white/10 px-6 py-14 md:py-20">
+      <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-14 items-end">
+        <div className="md:col-span-5">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-spark">
+            Tuition
+          </p>
+          <div className="mt-3 flex items-baseline gap-3">
+            <span className="text-7xl md:text-8xl font-bold tracking-[-0.04em] text-white">
+              {derived.priceLabel}
+            </span>
+            <span className="text-base text-white/55">one-time</span>
+          </div>
+          <p className="mt-3 max-w-sm text-[15px] text-white/75 leading-relaxed">
+            Compare to LaunchX or LeanGap at $3,000–$8,000+. Free to apply,
+            charged only if accepted.
+          </p>
+        </div>
+
+        <dl className="md:col-span-7 grid grid-cols-3 gap-6 md:gap-10">
+          {supporting.map((s) => (
+            <div key={s.k} className="border-t border-white/10 pt-4">
+              <dt className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/45">
+                {s.k}
+              </dt>
+              <dd className="mt-2 text-3xl md:text-4xl font-semibold tracking-tight text-white">
+                {s.v}
+              </dd>
+              <dd className="mt-0.5 text-xs text-white/55">{s.sub}</dd>
             </div>
-            <div className="mt-2 text-sm font-medium text-white">{s.k}</div>
-            <div className="mt-0.5 text-xs text-white/40">{s.sub}</div>
-          </Reveal>
-        ))}
+          ))}
+        </dl>
       </div>
     </section>
   );

@@ -1,94 +1,110 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/reveal";
+import type { SiteConfig } from "@/lib/site-config";
 
-export default function CTA() {
+export default function CTA({ config }: { config: SiteConfig }) {
+  const { derived, settings } = config;
+  const cohortLabel = derived.cohortLabel || derived.cohortName;
+
   return (
     <section id="apply" className="relative py-20 md:py-32 px-6">
       <div className="mx-auto max-w-5xl">
-        <Reveal className="text-center">
-          <div className="mx-auto h-14 w-14 md:h-16 md:w-16 animate-spark-pulse">
-            <Image src="/logo.svg" alt="SparkLine" width={64} height={64} />
-          </div>
-          <p className="mt-5 md:mt-6 text-xs sm:text-sm font-medium uppercase tracking-[0.2em] text-spark">
+        <Reveal className="max-w-2xl">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-spark">
             Reserve your seat
           </p>
-          <h2 className="mt-3 text-3xl sm:text-4xl md:text-6xl font-bold tracking-tighter text-white">
-            Your startup, <span className="shine">funded</span>,
-            <br className="hidden sm:block" />{" "}
+          <h2 className="mt-3 text-4xl md:text-6xl font-bold tracking-[-0.03em] leading-[1.02] text-white">
+            Your startup, funded,
+            <br />
             before you graduate.
           </h2>
-          <p className="mx-auto mt-4 md:mt-5 max-w-xl text-base sm:text-lg text-white/60">
-            Cohort 1 launches Summer 2026. 24 seats. $97. Real investors on
-            Demo Day. Apply in under 5 minutes.
+          <p className="mt-5 max-w-xl text-[17px] text-white/75 leading-relaxed">
+            {cohortLabel} launches {derived.cohortName}.{" "}
+            {derived.capacityLabel} seats. {derived.priceLabel} if accepted.
+            Real angel investors on Demo Day.
           </p>
         </Reveal>
 
-        <Reveal delay={100} className="relative mt-12">
-          <div
-            aria-hidden
-            className="absolute -top-20 left-1/2 -translate-x-1/2 h-72 w-[36rem] rounded-full bg-spark/25 blur-[140px] pointer-events-none"
-          />
-
-          <div className="relative mx-auto max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-zinc-900/80 to-black p-7 sm:p-10 md:p-14 shadow-[0_30px_80px_-20px_rgba(250,204,21,0.25)]">
-            <div className="grid gap-6 sm:gap-8 grid-cols-3">
-              <Stat label="Application fee" value="$0" sub="Free to apply" />
-              <Stat label="If accepted" value="$97" sub="One-time, full cohort" />
-              <Stat label="Cohort size" value="24" sub="Summer 2026" />
+        <Reveal
+          delay={80}
+          className="mt-12 grid gap-6 rounded-2xl border border-white/10 bg-white/[0.02] p-8 md:grid-cols-2 md:p-10"
+        >
+          <div className="flex flex-col justify-between gap-6">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/45">
+                Application
+              </p>
+              <p className="mt-2 text-5xl md:text-6xl font-bold tracking-[-0.03em] text-white">
+                $0
+              </p>
+              <p className="mt-1 text-sm text-white/70">
+                Free to apply. About 5 minutes.
+              </p>
             </div>
-            <div className="mt-10 flex flex-col items-center gap-3">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/45">
+                Tuition if accepted
+              </p>
+              <p className="mt-2 text-3xl font-semibold tracking-tight text-white">
+                {derived.priceLabel}{" "}
+                <span className="text-base font-normal text-white/55">
+                  one-time
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-between gap-6 border-t border-white/10 pt-6 md:border-l md:border-t-0 md:pl-10 md:pt-0">
+            <ul className="space-y-3 text-[15px] text-white/80">
+              <Bullet>4 weeks, fully virtual</Bullet>
+              <Bullet>Live mentor sessions + Discord community</Bullet>
+              <Bullet>Pitch to real angel investors on Demo Day</Bullet>
+              <Bullet>Walk away with a fundable startup package</Bullet>
+            </ul>
+            <div>
               <Link
                 href="/signup"
-                className="press inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-spark px-7 text-sm font-semibold text-black shadow-[0_0_24px_-6px_rgba(250,204,21,0.7)] hover:bg-spark-200"
+                className="press inline-flex w-full items-center justify-center gap-2 rounded-md bg-spark px-6 py-3.5 text-[15px] font-semibold text-black hover:bg-spark-200"
               >
                 Start your application
                 <span aria-hidden>→</span>
               </Link>
-              <p className="text-xs text-white/40">
-                Already applied?{" "}
-                <Link href="/login" className="press text-white/60 hover:text-spark">
+              <p className="mt-3 text-center text-xs text-white/55">
+                Rolling admissions · Reviewed weekly · Already applied?{" "}
+                <Link
+                  href="/login"
+                  className="text-white/80 underline-offset-2 hover:text-spark hover:underline"
+                >
                   Log in
                 </Link>
               </p>
             </div>
           </div>
-
-          <p className="mt-6 text-center text-xs text-white/40">
-            Limited seats · Applications reviewed on a rolling basis · Questions?{" "}
-            <a
-              href="mailto:sparkline.youth@gmail.com"
-              className="text-spark hover:underline"
-            >
-              sparkline.youth@gmail.com
-            </a>
-          </p>
         </Reveal>
+
+        <p className="mt-8 text-center text-xs text-white/55">
+          Questions?{" "}
+          <a
+            href={`mailto:${settings.contactEmail}`}
+            className="text-spark hover:underline"
+          >
+            {settings.contactEmail}
+          </a>
+        </p>
       </div>
     </section>
   );
 }
 
-function Stat({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub: string;
-}) {
+function Bullet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-center">
-      <div className="text-[10px] sm:text-xs font-medium uppercase tracking-[0.18em] sm:tracking-[0.2em] text-white/40">
-        {label}
-      </div>
-      <div className="mt-1.5 sm:mt-2 text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-spark">
-        {value}
-      </div>
-      <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-white/50">
-        {sub}
-      </div>
-    </div>
+    <li className="flex items-start gap-3">
+      <span
+        aria-hidden
+        className="mt-2 h-1 w-1 shrink-0 rounded-full bg-spark"
+      />
+      <span>{children}</span>
+    </li>
   );
 }

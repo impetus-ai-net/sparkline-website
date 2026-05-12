@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import type { SiteConfig } from "@/lib/site-config";
 import {
   Home,
   FileText,
@@ -34,25 +35,27 @@ const NAV = [
   { label: "Settings", icon: Settings },
 ];
 
-export default function ScrollPreview() {
+export default function ScrollPreview({ config }: { config: SiteConfig }) {
+  const { derived } = config;
   return (
     <section id="how-it-works" className="relative -mt-16">
       <ContainerScroll
         titleComponent={
           <>
-            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-spark">
+              The product
+            </p>
+            <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-[-0.02em] text-white">
               From idea to <span className="shine">funded startup</span>
             </h2>
-            <p className="mt-4 text-base md:text-xl text-white/60 max-w-2xl mx-auto">
-              4 weeks, fully online. A real curriculum, real mentors, real
-              investors on demo day.
+            <p className="mt-4 max-w-2xl text-base md:text-lg text-white/75 mx-auto leading-relaxed">
+              Live curriculum, weekly deliverables, real mentors, and a
+              cohort dashboard that keeps everything in one place.
             </p>
           </>
         }
       >
         <div className="relative h-full w-full bg-black overflow-hidden">
-          <div className="absolute inset-0 grid-bg opacity-40" />
-          <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-spark/15 blur-3xl" />
 
           <div className="relative grid h-full grid-cols-12 gap-0 text-left">
             {/* Sidebar — matches the real /dashboard sidebar */}
@@ -138,7 +141,7 @@ export default function ScrollPreview() {
                   </p>
                   <div className="mt-3 md:mt-5">
                     <button className="inline-flex h-7 md:h-9 items-center gap-1 md:gap-1.5 rounded-md md:rounded-lg bg-spark px-2 md:px-3.5 text-[10px] md:text-xs font-semibold text-black">
-                      Pay $97
+                      Pay {derived.priceLabel}
                       <ArrowRight className="h-3 w-3 md:h-3.5 md:w-3.5" />
                     </button>
                   </div>
@@ -150,11 +153,13 @@ export default function ScrollPreview() {
                     Course access
                   </h4>
                   <p className="mt-1.5 md:mt-2 text-base md:text-2xl font-semibold text-white">
-                    Summer 2026
+                    {derived.cohortName}
                   </p>
-                  <p className="mt-0.5 md:mt-1 text-[10px] md:text-xs text-white/45">
-                    Jun 15 → Jul 13
-                  </p>
+                  {derived.dateRangeLabel && (
+                    <p className="mt-0.5 md:mt-1 text-[10px] md:text-xs text-white/45">
+                      {derived.dateRangeLabel}
+                    </p>
+                  )}
                   <div className="mt-3 md:mt-5">
                     <button className="inline-flex h-7 md:h-9 items-center gap-1 md:gap-1.5 rounded-md md:rounded-lg border border-white/15 bg-white/5 px-2 md:px-3.5 text-[10px] md:text-xs font-semibold text-white">
                       Open course

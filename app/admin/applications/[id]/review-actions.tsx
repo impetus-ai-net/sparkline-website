@@ -15,11 +15,13 @@ export function ReviewActions({
   status,
   feeWaived,
   initialNotes,
+  priceLabel = "$97",
 }: {
   applicationId: string;
   status: string;
   feeWaived: boolean;
   initialNotes: string;
+  priceLabel?: string;
 }) {
   const router = useRouter();
   const [notes, setNotes] = useState(initialNotes);
@@ -134,8 +136,8 @@ export function ReviewActions({
         description={
           <>
             <p>
-              This skips the $97 charge entirely and enrolls the student
-              in the cohort right now. They'll get an email confirming
+              This skips the {priceLabel} charge entirely and enrolls the
+              student in the cohort right now. They'll get an email confirming
               access.
             </p>
             <div className="mt-3 text-left">

@@ -15,6 +15,7 @@ type Cohort = CohortInput & {
 
 const empty: CohortInput = {
   name: "",
+  cohort_number: null,
   starts_on: "",
   ends_on: "",
   capacity: 24,
@@ -81,6 +82,7 @@ export function CohortsManager({ initialCohorts }: { initialCohorts: Cohort[] })
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-white/40">
+            <th className="pb-3">#</th>
             <th className="pb-3">Name</th>
             <th className="pb-3">Dates</th>
             <th className="pb-3">Capacity</th>
@@ -93,6 +95,9 @@ export function CohortsManager({ initialCohorts }: { initialCohorts: Cohort[] })
         <tbody>
           {initialCohorts.map((c) => (
             <tr key={c.id} className="border-b border-white/5 last:border-0">
+              <td className="py-3 text-white/70">
+                {c.cohort_number != null ? `#${c.cohort_number}` : "—"}
+              </td>
               <td className="py-3 text-white">{c.name}</td>
               <td className="py-3 text-white/70">
                 {c.starts_on || "—"} → {c.ends_on || "—"}
@@ -125,7 +130,7 @@ export function CohortsManager({ initialCohorts }: { initialCohorts: Cohort[] })
           ))}
           {initialCohorts.length === 0 && (
             <tr>
-              <td colSpan={7} className="py-6 text-center text-sm text-white/50">
+              <td colSpan={8} className="py-6 text-center text-sm text-white/50">
                 No cohorts. Create your first.
               </td>
             </tr>
@@ -182,14 +187,40 @@ function CohortForm({
       }}
       className="space-y-4"
     >
-      <div>
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          required
-          value={c.name}
-          onChange={(e) => setC({ ...c, name: e.target.value })}
-        />
+      <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
+        <div>
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            required
+            placeholder="Summer 2026"
+            value={c.name}
+            onChange={(e) => setC({ ...c, name: e.target.value })}
+          />
+          <p className="mt-1 text-xs text-white/40">
+            Season label shown across the site (e.g. "Summer 2026").
+          </p>
+        </div>
+        <div>
+          <Label htmlFor="cohort_number">Cohort #</Label>
+          <Input
+            id="cohort_number"
+            type="number"
+            min={1}
+            placeholder="1"
+            value={c.cohort_number ?? ""}
+            onChange={(e) =>
+              setC({
+                ...c,
+                cohort_number:
+                  e.target.value === "" ? null : parseInt(e.target.value) || null,
+              })
+            }
+          />
+          <p className="mt-1 text-xs text-white/40">
+            Renders as "Cohort N".
+          </p>
+        </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
