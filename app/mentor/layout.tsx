@@ -1,6 +1,7 @@
 import { requireMentor } from "@/lib/auth";
 import { MentorSidebar } from "@/components/mentor/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
+import { getThemeFromCookie } from "@/lib/theme";
 
 export default async function MentorLayout({
   children,
@@ -8,8 +9,12 @@ export default async function MentorLayout({
   children: React.ReactNode;
 }) {
   const profile = await requireMentor();
+  const themeClass =
+    getThemeFromCookie() === "light" ? "theme-light" : "";
   return (
-    <div className="flex min-h-screen bg-black text-white md:flex-row flex-col">
+    <div
+      className={`${themeClass} flex min-h-screen bg-black text-white md:flex-row flex-col`}
+    >
       <MentorSidebar role={profile.role} />
       <div className="flex flex-1 flex-col">
         <MobileNav kind="mentor" role={profile.role} />

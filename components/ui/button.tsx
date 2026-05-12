@@ -9,16 +9,15 @@ export const Button = React.forwardRef<HTMLButtonElement, Props>(function Button
   { className = "", variant = "primary", size = "md", ...props },
   ref,
 ) {
-  // Short transition + active:scale for tactile press feedback. We omit
-  // transform from the transition list so the press scale snaps in on the
-  // very next frame, then eases back on release.
+  // Instant feedback: no easing on hover/active so the click "snaps".
+  // Only the press scale animates, and via transform alone so it stays
+  // composited on the GPU.
   const base =
-    "inline-flex select-none items-center justify-center gap-2 rounded-lg font-medium transition-[background-color,box-shadow,opacity,color] duration-100 ease-out active:scale-[0.97] active:transition-none disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark/60";
+    "inline-flex select-none items-center justify-center gap-2 rounded-md font-medium active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark/60";
   const variants = {
-    primary:
-      "bg-spark text-black hover:bg-spark-200 shadow-[0_0_24px_-6px_rgba(250,204,21,0.7)]",
+    primary: "bg-spark text-black hover:bg-spark-200",
     secondary:
-      "bg-white/5 text-white border border-white/15 hover:bg-white/10",
+      "bg-white/[0.04] text-white border border-white/15 hover:border-white/30 hover:bg-white/[0.07]",
     ghost: "text-white/70 hover:text-white hover:bg-white/5",
     danger: "bg-red-500/90 text-white hover:bg-red-500",
   } as const;

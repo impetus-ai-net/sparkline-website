@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { getThemeFromCookie, htmlClassForTheme } from "@/lib/theme";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -90,9 +89,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const theme = getThemeFromCookie();
+  // Marketing routes stay dark by default — the theme class is scoped
+  // to authenticated layouts (admin / dashboard / mentor / investor) so
+  // the public site never flips palette on a stale cookie.
   return (
-    <html lang="en" className={htmlClassForTheme(theme)}>
+    <html lang="en">
       <body className="bg-black text-white antialiased">
         <a
           href="#main-content"

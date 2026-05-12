@@ -12,6 +12,7 @@ import {
   MessageSquareText,
   GraduationCap,
   ShieldAlert,
+  ChevronRight,
 } from "lucide-react";
 import { markNotificationRead } from "./actions";
 import { formatRelativeTime } from "@/lib/format-time";
@@ -49,9 +50,10 @@ export function NotificationItem({ n }: { n: N }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const Icon = iconFor(n.type);
+  const isUnread = !n.read_at;
 
   function onClick() {
-    if (!n.read_at) {
+    if (isUnread) {
       start(async () => {
         try {
           await markNotificationRead(n.id);
@@ -70,33 +72,55 @@ export function NotificationItem({ n }: { n: N }) {
         type="button"
         onClick={onClick}
         disabled={pending}
-        className={`flex w-full items-start gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03] ${
-          n.read_at ? "opacity-70" : ""
-        }`}
+        className="group press relative flex w-full items-start gap-4 py-5 text-left hover:bg-white/[0.02]"
       >
+        {isUnread && (
+          <span
+            aria-hidden
+            className="absolute left-0 top-0 h-full w-[2px] bg-spark"
+          />
+        )}
         <div
-          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
-            n.read_at
-              ? "border-white/10 bg-zinc-900/60 text-white/40"
-              : "border-spark/30 bg-spark/10 text-spark"
+          className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md border ${
+            isUnread
+              ? "border-spark/30 bg-spark/10 text-spark"
+              : "border-white/10 text-white/45"
           }`}
         >
           <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="text-sm font-medium text-white">{n.title}</div>
-            {!n.read_at && (
-              <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-spark" />
-            )}
+          <div className="flex items-baseline justify-between gap-3">
+            <p
+              className={`text-[15px] leading-snug ${
+                isUnread
+                  ? "font-medium text-white"
+                  : "font-normal text-white/65"
+              }`}
+            >
+              {n.title}
+            </p>
+            <p
+              className={`shrink-0 text-[11px] tabular-nums ${
+                isUnread ? "text-white/55" : "text-white/35"
+              }`}
+            >
+              {formatRelativeTime(n.created_at)}
+            </p>
           </div>
           {n.body && (
-            <p className="mt-0.5 text-sm text-white/60">{n.body}</p>
+            <p
+              className={`mt-1 text-sm leading-relaxed ${
+                isUnread ? "text-white/70" : "text-white/50"
+              }`}
+            >
+              {n.body}
+            </p>
           )}
-          <p className="mt-1.5 text-[11px] uppercase tracking-wider text-white/35">
-            {formatRelativeTime(n.created_at)}
-          </p>
         </div>
+        {n.link && (
+          <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-white/25 transition-transform group-hover:translate-x-0.5 group-hover:text-white/60" />
+        )}
       </button>
     </li>
   );

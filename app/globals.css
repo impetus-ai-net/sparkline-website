@@ -55,20 +55,32 @@ body {
   }
 }
 
-/* Tactile press feedback for any clickable element marked .press.
- * Uses transform-only animation so it composites on the GPU and stays
- * snappy even on lower-end devices. */
+/* Tactile press feedback. The previous version animated transform +
+ * color + shadow with 80–120ms transitions which gave every click a
+ * perceptible delay. Drop the transitions entirely; the only motion
+ * left is an instantaneous active-state scale so the press is felt
+ * but never lags. */
 .press {
-  transition: transform 80ms ease-out, background-color 120ms ease-out,
-    color 120ms ease-out, box-shadow 120ms ease-out, opacity 120ms ease-out;
-  will-change: transform;
+  transition: none;
 }
 .press:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 .press:disabled,
 .press[aria-disabled="true"] {
   transform: none;
+}
+
+/* Snappy interactive elements. Tailwind's default `transition` utility
+ * is 150ms; on buttons/links that reads as a noticeable lag. Override
+ * to a much shorter duration so hover/active states feel immediate
+ * without flickering. Components that need longer (FAQ accordion,
+ * theme-toggle slide) opt back in with `duration-{n}`. */
+button,
+a,
+[role="button"],
+.transition {
+  transition-duration: 60ms;
 }
 
 /* Scroll-reveal without JS — initial state hides; the .revealed class
@@ -258,3 +270,116 @@ body {
 }
 
 /* The brand-yellow primary button keeps a dark text for contrast — already correct */
+
+/* Extra dark-utility coverage that wasn't in the original pass. The
+ * dashboards lean on these heavily; missing them is what made light
+ * mode look broken (white text on white panels, missing borders, etc.). */
+
+/* Additional surface variants used by cards/badges. */
+.theme-light .bg-white\/\[0\.05\] { background-color: rgba(24, 24, 27, 0.05); }
+.theme-light .bg-white\/\[0\.06\] { background-color: rgba(24, 24, 27, 0.06); }
+.theme-light .bg-zinc-800,
+.theme-light .bg-zinc-800\/40,
+.theme-light .bg-zinc-800\/50,
+.theme-light .bg-zinc-800\/60 { background-color: rgba(244, 244, 245, 0.7); }
+.theme-light .bg-zinc-950\/30 { background-color: rgba(244, 244, 245, 0.5); }
+
+/* Text strengths we missed. */
+.theme-light .text-white\/85 { color: rgba(24, 24, 27, 0.88); }
+.theme-light .text-white\/75 { color: rgba(24, 24, 27, 0.78); }
+.theme-light .text-white\/35 { color: rgba(24, 24, 27, 0.45); }
+.theme-light .text-white\/25 { color: rgba(24, 24, 27, 0.4); }
+.theme-light .text-white\/20 { color: rgba(24, 24, 27, 0.35); }
+
+/* Border strengths used in dividers. */
+.theme-light .border-white\/\[0\.06\] { border-color: rgba(24, 24, 27, 0.08); }
+.theme-light .border-white\/\[0\.08\] { border-color: rgba(24, 24, 27, 0.1); }
+.theme-light .border-spark\/40 { border-color: rgba(184, 142, 0, 0.45); }
+.theme-light .border-spark\/50 { border-color: rgba(184, 142, 0, 0.55); }
+.theme-light .border-spark\/60 { border-color: rgba(184, 142, 0, 0.6); }
+.theme-light .border-amber-300\/30 { border-color: rgba(217, 119, 6, 0.3); }
+.theme-light .border-red-400\/30,
+.theme-light .border-red-500\/30 { border-color: rgba(220, 38, 38, 0.3); }
+.theme-light .border-emerald-300\/30,
+.theme-light .border-emerald-400\/30 { border-color: rgba(4, 120, 87, 0.3); }
+
+/* Status backgrounds */
+.theme-light .bg-amber-300\/5,
+.theme-light .bg-amber-400\/5,
+.theme-light .bg-amber-300\/10 { background-color: rgba(217, 119, 6, 0.08); }
+.theme-light .bg-red-400\/5,
+.theme-light .bg-red-400\/10,
+.theme-light .bg-red-500\/10 { background-color: rgba(220, 38, 38, 0.08); }
+.theme-light .bg-emerald-300\/5,
+.theme-light .bg-emerald-400\/5,
+.theme-light .bg-emerald-400\/10 { background-color: rgba(4, 120, 87, 0.08); }
+
+/* Spark surfaces — keep amber but adjust opacity for white BG */
+.theme-light .bg-spark\/\[0\.04\] { background-color: rgba(184, 142, 0, 0.07); }
+.theme-light .bg-spark\/\[0\.06\] { background-color: rgba(184, 142, 0, 0.09); }
+.theme-light .bg-spark\/20 { background-color: rgba(184, 142, 0, 0.18); }
+.theme-light .bg-spark\/25 { background-color: rgba(184, 142, 0, 0.2); }
+
+/* Hover variants we missed */
+.theme-light .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(24, 24, 27, 0.04); }
+.theme-light .hover\:bg-white\/\[0\.05\]:hover { background-color: rgba(24, 24, 27, 0.05); }
+.theme-light .hover\:bg-zinc-900\/60:hover { background-color: rgba(244, 244, 245, 0.7); }
+
+/* Gradients used on cards — the dark-to-darker gradient becomes a flat
+ * pale surface that reads as elevated, not dim. */
+.theme-light .from-zinc-900\/80,
+.theme-light .from-zinc-900\/60,
+.theme-light .from-zinc-900\/40,
+.theme-light .from-white\/\[0\.04\] {
+  --tw-gradient-from: rgba(244, 244, 245, 0.7) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(244, 244, 245, 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.theme-light .to-black,
+.theme-light .to-zinc-900,
+.theme-light .to-zinc-900\/80,
+.theme-light .to-transparent {
+  --tw-gradient-to: rgba(244, 244, 245, 0) var(--tw-gradient-to-position) !important;
+}
+.theme-light .bg-gradient-to-b,
+.theme-light .bg-gradient-to-br,
+.theme-light .bg-gradient-to-t,
+.theme-light .bg-gradient-to-tr {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(244, 244, 245, 0.5),
+    transparent
+  );
+}
+
+/* Inputs / selects — dark surfaces become subtle off-white with a
+ * stronger border so the field reads as enclosed on the page. */
+.theme-light input,
+.theme-light textarea,
+.theme-light select {
+  background-color: #ffffff;
+  color: #18181b;
+  border-color: rgba(24, 24, 27, 0.18);
+}
+.theme-light input::placeholder,
+.theme-light textarea::placeholder { color: rgba(24, 24, 27, 0.45); }
+.theme-light input:focus,
+.theme-light textarea:focus,
+.theme-light select:focus { border-color: rgba(184, 142, 0, 0.5); }
+
+/* Dividers used inside cards */
+.theme-light .divide-white\/15 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(24, 24, 27, 0.12);
+}
+
+/* Sidebar/notification bell active state should keep the spark tint
+ * but with the corrected dark-amber accent. Already handled by the
+ * text-spark + bg-spark/X overrides above. */
+
+/* Buttons with bg-spark + shadow keep their hover state. Override the
+ * generic hover background that bleeds white into light buttons. */
+.theme-light .hover\:bg-spark-200:hover { background-color: #fde047; }
+
+/* The mobile-nav menu icon button uses border-white/10 + text-white/70.
+ * Already covered. */
+

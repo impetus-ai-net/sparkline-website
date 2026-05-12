@@ -2,12 +2,19 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUser } from "@/lib/auth";
-import { Card, StatusBadge } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReferralCard } from "./referral-card";
 import { ChargePayButton } from "@/components/charge-pay-button";
 import { env } from "@/lib/env";
-import { AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  PlayCircle,
+  FileText,
+  CalendarDays,
+  GraduationCap,
+} from "lucide-react";
 import { getSiteConfig } from "@/lib/site-config";
 
 export default async function DashboardHome() {
@@ -54,121 +61,135 @@ export default async function DashboardHome() {
 
   const greeting = profile?.full_name?.split(" ")[0] || "there";
 
+  // Status copy + primary action are derived together so the hero feels
+  // intentional — no double-card with redundant labels.
+  const status = appStatus(app?.status);
+
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="text-3xl font-bold tracking-tight">
-        Welcome, {greeting}.
-      </h1>
-      <p className="mt-1 text-sm text-white/50">
-        Here's where your SparkLine journey lives.
-      </p>
-
-      {(pendingFees?.length ?? 0) > 0 && (
-        <div className="mt-6 space-y-3">
-          {(pendingFees ?? []).map((f: any) => (
-            <Card
-              key={f.id}
-              className="border-amber-300/30 bg-amber-300/5"
-            >
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-semibold text-amber-200">
-                    Fee due: {f.description}
-                  </h3>
-                  <p className="mt-0.5 text-xs text-white/60">
-                    ${(f.amount_cents / 100).toFixed(2)} — please settle when
-                    you can. You can keep using SparkLine in the meantime.
-                  </p>
-                </div>
-                <ChargePayButton chargeId={f.id} />
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-10 grid gap-5 md:grid-cols-2">
-        {/* Application card */}
-        <Card>
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
-                Application
-              </h3>
-              <p className="mt-2 text-2xl font-semibold">
-                {app ? app.status[0].toUpperCase() + app.status.slice(1) : "Not started"}
-              </p>
-            </div>
-            {app && <StatusBadge status={app.status} />}
+      {/* Hero row — name + lifecycle stage. Mirrors the marketing voice. */}
+      <div className="border-b border-white/10 pb-8">
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-spark">
+          {status.label}
+        </p>
+        <h1 className="mt-3 text-4xl md:text-5xl font-bold tracking-[-0.02em] text-white">
+          Welcome, {greeting}.
+        </h1>
+        <p className="mt-3 max-w-xl text-[15px] text-white/75 leading-relaxed">
+          {status.lede(priceLabel)}
+        </p>
+        {status.cta && (
+          <div className="mt-6">
+            <Link href={status.cta.href}>
+              <Button>
+                {status.cta.label(priceLabel)}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
-          <div className="mt-5">
-            {!app && (
-              <Link href="/apply">
-                <Button>Start application</Button>
-              </Link>
-            )}
-            {app?.status === "draft" && (
-              <Link href="/apply">
-                <Button>Continue application</Button>
-              </Link>
-            )}
-            {app?.status === "submitted" && (
-              <p className="text-sm text-white/60">
-                We're reviewing your application. We'll email you when there's a
-                decision.
-              </p>
-            )}
-            {app?.status === "accepted" && (
-              <Link href="/dashboard/application">
-                <Button>Pay {priceLabel} to enroll</Button>
-              </Link>
-            )}
-            {app?.status === "rejected" && (
-              <p className="text-sm text-white/60">
-                Thanks for applying. Unfortunately you weren't selected for this cohort. You're welcome to apply for the next one.
-              </p>
-            )}
-            {(app?.status === "paid" || app?.status === "enrolled") && (
-              <p className="text-sm text-emerald-300">
-                You're enrolled. See you in the cohort!
-              </p>
-            )}
-          </div>
-        </Card>
-
-        {/* Enrollment / Course card */}
-        <Card>
-          <h3 className="text-sm font-medium uppercase tracking-wider text-white/50">
-            Course access
-          </h3>
-          {enrollment ? (
-            <>
-              <p className="mt-2 text-2xl font-semibold">
-                {enrollment.cohort?.name ?? "Cohort"}
-              </p>
-              <p className="mt-1 text-sm text-white/50">
-                {enrollment.cohort?.starts_on} → {enrollment.cohort?.ends_on}
-              </p>
-              <Link href="/dashboard/course" className="mt-5 inline-block">
-                <Button>Open course</Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <p className="mt-2 text-2xl font-semibold text-white/40">
-                Locked
-              </p>
-              <p className="mt-1 text-sm text-white/50">
-                Course content unlocks once you're enrolled.
-              </p>
-            </>
-          )}
-        </Card>
+        )}
       </div>
 
+      {/* Fees due — surfaced above the fold when present. */}
+      {(pendingFees?.length ?? 0) > 0 && (
+        <section className="mt-8 space-y-3">
+          {(pendingFees ?? []).map((f: any) => (
+            <div
+              key={f.id}
+              className="flex items-start gap-3 rounded-xl border border-amber-300/30 bg-amber-300/5 px-5 py-4"
+            >
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-amber-200">
+                  Fee due — {f.description}
+                </p>
+                <p className="mt-0.5 text-xs text-white/65">
+                  ${(f.amount_cents / 100).toFixed(2)}. Settle when you can;
+                  SparkLine stays open in the meantime.
+                </p>
+              </div>
+              <ChargePayButton chargeId={f.id} />
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* Two editorial blocks: program + this week. */}
+      <section className="mt-10 grid gap-10 md:grid-cols-12">
+        <div className="md:col-span-7">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/45">
+            Program
+          </h2>
+          <div className="mt-4 border-t border-white/10">
+            <Row
+              icon={GraduationCap}
+              label="Cohort"
+              value={
+                enrollment
+                  ? enrollment.cohort?.name ?? "Enrolled"
+                  : "Not enrolled yet"
+              }
+              sub={
+                enrollment
+                  ? `${enrollment.cohort?.starts_on ?? "—"} → ${enrollment.cohort?.ends_on ?? "—"}`
+                  : "Apply to claim a seat."
+              }
+            />
+            <Row
+              icon={FileText}
+              label="Application"
+              value={app ? statusTitle(app.status) : "Not started"}
+              statusBadge={app?.status}
+              href="/dashboard/application"
+            />
+            <Row
+              icon={PlayCircle}
+              label="Course"
+              value={enrollment ? "Open" : "Locked"}
+              sub={enrollment ? "Weekly modules + assignments" : "Unlocks at enrollment"}
+              href={enrollment ? "/dashboard/course" : undefined}
+              muted={!enrollment}
+            />
+            <Row
+              icon={CalendarDays}
+              label="Events"
+              value={enrollment ? "View schedule" : "Locked"}
+              sub={enrollment ? "Office hours + Demo Day" : "Unlocks at enrollment"}
+              href={enrollment ? "/dashboard/events" : undefined}
+              muted={!enrollment}
+            />
+          </div>
+        </div>
+
+        <aside className="md:col-span-5">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.22em] text-white/45">
+            Quick links
+          </h2>
+          <ul className="mt-4 grid grid-cols-2 gap-2">
+            {[
+              { href: "/dashboard/application", label: "Application" },
+              { href: "/dashboard/billing", label: "Billing" },
+              { href: "/dashboard/team", label: "Team" },
+              { href: "/dashboard/checkin", label: "Check-in" },
+              { href: "/dashboard/resources", label: "Resources" },
+              { href: "/dashboard/settings", label: "Settings" },
+            ].map((l) => (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  className="press flex items-center justify-between rounded-md border border-white/10 bg-white/[0.02] px-3 py-2.5 text-sm text-white/85 hover:border-white/25 hover:bg-white/[0.05]"
+                >
+                  <span>{l.label}</span>
+                  <ArrowRight className="h-3.5 w-3.5 text-white/30" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </section>
+
       {profile?.referral_code && (
-        <div className="mt-10">
+        <div className="mt-12">
           <ReferralCard
             code={profile.referral_code}
             siteUrl={env.siteUrl}
@@ -178,39 +199,139 @@ export default async function DashboardHome() {
       )}
 
       {certificate && (
-        <Card className="mt-10 border-spark/30 bg-spark/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-spark">
-                Certificate of completion
-              </h3>
-              <p className="mt-1 text-sm text-white/70">
-                You graduated. Share it on LinkedIn or anywhere.
-              </p>
-            </div>
-            <Link href={`/verify/${certificate.code}`}>
-              <Button size="sm">View certificate →</Button>
-            </Link>
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-spark/30 bg-spark/[0.04] px-5 py-4">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-spark">
+              Certificate of completion
+            </p>
+            <p className="mt-1 text-sm text-white/80">
+              You graduated. Share it on LinkedIn or anywhere.
+            </p>
           </div>
-        </Card>
-      )}
-
-      <div className="mt-10">
-        <h2 className="text-lg font-semibold">Quick links</h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/dashboard/application">
-            <Button variant="secondary" size="sm">View application</Button>
-          </Link>
-          <Link href="/dashboard/billing">
-            <Button variant="secondary" size="sm">Billing</Button>
-          </Link>
-          <Link href="/dashboard/settings">
-            <Button variant="secondary" size="sm">Settings</Button>
+          <Link href={`/verify/${certificate.code}`}>
+            <Button size="sm">
+              View certificate
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
           </Link>
         </div>
-      </div>
+      )}
     </div>
   );
+}
+
+type StatusBucket = {
+  label: string;
+  lede: (price: string) => string;
+  cta: { href: string; label: (price: string) => string } | null;
+};
+
+function appStatus(s?: string | null): StatusBucket {
+  switch (s) {
+    case "draft":
+      return {
+        label: "Application · Draft",
+        lede: () =>
+          "Pick up where you left off. Saves autosave as you type.",
+        cta: { href: "/apply", label: () => "Continue application" },
+      };
+    case "submitted":
+      return {
+        label: "Application · In review",
+        lede: () =>
+          "We're reading your application. You'll get an email when there's a decision.",
+        cta: null,
+      };
+    case "accepted":
+      return {
+        label: "Application · Accepted",
+        lede: (price) =>
+          `You're in. Lock in your seat with the one-time ${price} tuition.`,
+        cta: {
+          href: "/dashboard/application",
+          label: (price) => `Pay ${price} to enroll`,
+        },
+      };
+    case "rejected":
+      return {
+        label: "Application · Closed",
+        lede: () =>
+          "You weren't selected for this cohort. You're welcome to apply for the next one.",
+        cta: null,
+      };
+    case "paid":
+    case "enrolled":
+      return {
+        label: "Enrolled",
+        lede: () =>
+          "You're enrolled. Open your course to see this week's deliverables.",
+        cta: { href: "/dashboard/course", label: () => "Open course" },
+      };
+    default:
+      return {
+        label: "Get started",
+        lede: () =>
+          "Take your idea from raw concept to investor-ready pitch in four weeks.",
+        cta: { href: "/apply", label: () => "Start application" },
+      };
+  }
+}
+
+function statusTitle(s: string) {
+  return s[0].toUpperCase() + s.slice(1);
+}
+
+function Row({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  href,
+  muted,
+  statusBadge,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  sub?: string;
+  href?: string;
+  muted?: boolean;
+  statusBadge?: string;
+}) {
+  const inner = (
+    <div className="group flex items-center gap-4 border-b border-white/10 py-5">
+      <Icon
+        className={`h-5 w-5 shrink-0 ${muted ? "text-white/25" : "text-spark"}`}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/45">
+          {label}
+        </p>
+        <p
+          className={`mt-1 text-base font-medium ${
+            muted ? "text-white/55" : "text-white"
+          }`}
+        >
+          {value}
+        </p>
+        {sub && (
+          <p className="mt-0.5 text-xs text-white/55 truncate">{sub}</p>
+        )}
+      </div>
+      {statusBadge && <StatusBadge status={statusBadge} />}
+      {href && (
+        <ArrowRight className="h-4 w-4 shrink-0 text-white/30 group-hover:text-white/70" />
+      )}
+    </div>
+  );
+  if (href) {
+    return (
+      <Link href={href} className="press block hover:bg-white/[0.02]">
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
 }
 
 async function countReferrals(code: string): Promise<number> {

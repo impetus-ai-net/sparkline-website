@@ -236,38 +236,52 @@ export function NotificationBell({ align = "right" }: { align?: Align } = {}) {
                 </p>
               </li>
             )}
-            {items.map((n) => (
-              <li key={n.id}>
-                <button
-                  type="button"
-                  onClick={() => clickItem(n)}
-                  className={`block w-full px-4 py-3 text-left transition hover:bg-white/[0.03] ${
-                    n.read_at ? "opacity-60" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-2.5">
+            {items.map((n) => {
+              const isUnread = !n.read_at;
+              return (
+                <li key={n.id} className="relative">
+                  {isUnread && (
                     <span
-                      className={`mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full ${
-                        n.read_at ? "bg-transparent" : "bg-spark"
-                      }`}
+                      aria-hidden
+                      className="absolute left-0 top-0 h-full w-[2px] bg-spark"
                     />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-white">
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => clickItem(n)}
+                    className="press block w-full px-4 py-3 text-left hover:bg-white/[0.03]"
+                  >
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p
+                        className={`truncate text-sm leading-snug ${
+                          isUnread
+                            ? "font-medium text-white"
+                            : "font-normal text-white/65"
+                        }`}
+                      >
                         {n.title}
-                      </div>
-                      {n.body && (
-                        <p className="mt-0.5 line-clamp-2 text-xs text-white/55">
-                          {n.body}
-                        </p>
-                      )}
-                      <p className="mt-1 text-[10px] uppercase tracking-wider text-white/30">
+                      </p>
+                      <p
+                        className={`shrink-0 text-[10px] tabular-nums ${
+                          isUnread ? "text-white/55" : "text-white/35"
+                        }`}
+                      >
                         {formatRelativeTime(n.created_at)}
                       </p>
                     </div>
-                  </div>
-                </button>
-              </li>
-            ))}
+                    {n.body && (
+                      <p
+                        className={`mt-1 line-clamp-2 text-xs ${
+                          isUnread ? "text-white/70" : "text-white/45"
+                        }`}
+                      >
+                        {n.body}
+                      </p>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
           <div className="border-t border-white/10 bg-black/40 px-4 py-2.5">
             <Link
