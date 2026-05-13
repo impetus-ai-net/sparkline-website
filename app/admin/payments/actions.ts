@@ -4,13 +4,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 import { assertAdmin } from "@/lib/server-guards";
 import { logAudit } from "@/lib/audit";
+import {
+  postChannelMessage,
+  refundEmbed,
+  getDiscordSettings,
+} from "@/lib/discord";
 
 export async function refundPayment(paymentId: string, reason?: string) {
   await assertAdmin();
   const admin = createAdminClient();
   const { data: p, error: fetchErr } = await admin
     .from("payments")
-    .select("id, stripe_payment_intent_id, status, amount_cents")
+    .select("id, user_id, stripe_payment_intent_id, status, amount_cents")
     .eq("id", paymentId)
     .single();
   if (fetchErr) throw new Error(fetchErr.message);
@@ -43,6 +48,30 @@ export async function refundPayment(paymentId: string, reason?: string) {
       reason: reason ?? null,
     },
   });
+
+  try {
+    const settings = await getDiscordSettings();
+    if (settings.adminFeedChannelId) {
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", p.user_id)
+        .maybeSingle();
+      await postChannelMessage(settings.adminFeedChannelId, {
+        embeds: [
+          refundEmbed({
+            name: profile?.full_name ?? profile?.email ?? null,
+            amountCents: p.amount_cents,
+            description: "Enrollment payment refund",
+            reason: reason?.trim() || null,
+            kind: "payment",
+          }),
+        ],
+      });
+    }
+  } catch (err) {
+    console.error("[payments] discord refund post failed", err);
+  }
 
   revalidatePath("/admin/payments");
   return { ok: true, refundId: refund.id };

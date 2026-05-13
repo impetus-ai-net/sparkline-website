@@ -9,6 +9,11 @@ import { stripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 import { assertRecentMfa } from "@/lib/mfa";
 import type { ChargeKind } from "@/lib/types";
+import {
+  postChannelMessage,
+  refundEmbed,
+  getDiscordSettings,
+} from "@/lib/discord";
 
 export type ChargeInput = {
   userId: string;
@@ -195,6 +200,30 @@ export async function refundCharge(chargeId: string, reason?: string) {
     body: `$${(existing.amount_cents / 100).toFixed(2)} returned to your card.`,
     link: "/dashboard/billing",
   });
+
+  try {
+    const settings = await getDiscordSettings();
+    if (settings.adminFeedChannelId) {
+      const { data: p } = await admin
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", existing.user_id)
+        .maybeSingle();
+      await postChannelMessage(settings.adminFeedChannelId, {
+        embeds: [
+          refundEmbed({
+            name: p?.full_name ?? p?.email ?? null,
+            amountCents: existing.amount_cents,
+            description: existing.description,
+            reason: reason?.trim() || null,
+            kind: existing.kind,
+          }),
+        ],
+      });
+    }
+  } catch (err) {
+    console.error("[charges] discord refund post failed", err);
+  }
 
   revalidatePath("/admin/charges");
   revalidatePath(`/admin/charges?user=${existing.user_id}`);

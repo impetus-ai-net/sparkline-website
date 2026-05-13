@@ -254,7 +254,32 @@ export async function fetchGuildMember(discordUserId: string) {
       { headers: { Authorization: `Bot ${env.discordBotToken}` } },
     );
     if (!res.ok) return null;
-    return (await res.json()) as { roles: string[]; nick: string | null };
+    return (await res.json()) as {
+      roles: string[];
+      nick: string | null;
+      user?: { id: string; username: string; global_name: string | null; avatar: string | null };
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchGuildMemberCount(): Promise<number | null> {
+  if (!(await isDiscordEnabled())) return null;
+  if (!env.discordBotToken || !env.discordGuildId) return null;
+  try {
+    // `?with_counts=true` returns approximate_member_count without
+    // paginating /guilds/:id/members. Cheap enough to do on each admin
+    // page load.
+    const res = await fetch(
+      `${API}/guilds/${env.discordGuildId}?with_counts=true`,
+      { headers: { Authorization: `Bot ${env.discordBotToken}` } },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as { approximate_member_count?: number };
+    return typeof json.approximate_member_count === "number"
+      ? json.approximate_member_count
+      : null;
   } catch {
     return null;
   }
@@ -402,6 +427,78 @@ export function announcementEmbed(args: {
   };
 }
 
+/**
+ * Open a DM channel with a guild member and post a message into it.
+ * Best-effort: Discord refuses DMs if the user has them disabled, which
+ * we treat as a soft fail.
+ */
+export async function sendDirectMessage(
+  discordUserId: string,
+  payload: { content?: string; embeds?: Record<string, any>[] },
+): Promise<boolean> {
+  if (!(await isDiscordEnabled())) return false;
+  if (!env.discordBotToken || !discordUserId) return false;
+  try {
+    const openRes = await fetch(`${API}/users/@me/channels`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bot ${env.discordBotToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ recipient_id: discordUserId }),
+    });
+    if (!openRes.ok) {
+      console.error("[discord] open DM failed", openRes.status);
+      return false;
+    }
+    const channel = (await openRes.json()) as { id?: string };
+    if (!channel.id) return false;
+    return await postChannelMessage(channel.id, payload);
+  } catch (err) {
+    console.error("[discord] DM failed", err);
+    return false;
+  }
+}
+
+export function applicationEmbed(args: {
+  name: string;
+  email: string | null;
+  cohortName: string | null;
+  link: string;
+}) {
+  const lines: string[] = [];
+  if (args.email) lines.push(`📧 ${args.email}`);
+  if (args.cohortName) lines.push(`👥 ${args.cohortName}`);
+  return {
+    title: `📥 New application — ${args.name}`,
+    description: lines.join("\n") || undefined,
+    color: BRAND_COLOR,
+    url: args.link,
+    footer: { text: "SparkLine · applications" },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+export function refundEmbed(args: {
+  name: string | null;
+  amountCents: number;
+  description: string;
+  reason: string | null;
+  kind: "fee" | "fine" | "payment";
+}) {
+  const dollars = (args.amountCents / 100).toFixed(2);
+  const lines: string[] = [`💸 $${dollars} refunded`];
+  if (args.description) lines.push(`📝 ${args.description}`);
+  if (args.reason) lines.push(`🗒️ ${args.reason}`);
+  return {
+    title: `↩️ Refund — ${args.name ?? "user"}`,
+    description: lines.join("\n"),
+    color: BRAND_COLOR,
+    footer: { text: `SparkLine · ${args.kind}` },
+    timestamp: new Date().toISOString(),
+  };
+}
+
 export function eventEmbed(args: {
   title: string;
   description: string | null;
@@ -497,4 +594,142 @@ export function discordAvatarUrl(
 ): string | null {
   if (!userId || !avatar) return null;
   return `https://cdn.discordapp.com/avatars/${userId}/${avatar}.png?size=${size}`;
+}
+
+// ---------------------------------------------------------------------------
+// Slash-command registration. We register globally — propagation is up to
+// an hour on a fresh app, instant after the first registration. The spec
+// is mirrored by the /api/discord/interactions handler.
+// ---------------------------------------------------------------------------
+// Application command option types (subset).
+//   3 = STRING, 6 = USER. See:
+//   https://discord.com/developers/docs/interactions/application-commands
+export const SLASH_COMMANDS = [
+  {
+    name: "me",
+    description: "Show your SparkLine status (private).",
+  },
+  {
+    name: "link",
+    description: "DM yourself the account-link URL.",
+  },
+  {
+    name: "cohort",
+    description: "Show your current cohort.",
+  },
+  {
+    name: "events",
+    description: "Show the next few upcoming SparkLine events.",
+  },
+  {
+    name: "sync",
+    description: "Re-sync your Discord roles with your SparkLine status.",
+  },
+  {
+    name: "help",
+    description: "List every SparkLine slash command.",
+  },
+  {
+    name: "whois",
+    description: "Admins only — look up a Discord user's SparkLine profile.",
+    options: [
+      {
+        name: "user",
+        description: "The Discord user to look up.",
+        type: 6,
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "announce",
+    description: "Admins only — broadcast to enrolled students.",
+    options: [
+      { name: "title", description: "Announcement title.", type: 3, required: true },
+      { name: "message", description: "Body of the announcement.", type: 3, required: true },
+    ],
+  },
+] as const;
+
+/**
+ * Register (or overwrite) every global slash command for the
+ * application. PUT replaces the full set in one request, so removing a
+ * command from SLASH_COMMANDS unregisters it on the next call.
+ *
+ * Returns the registered command summaries from Discord so the UI can
+ * confirm what's actually live.
+ */
+export async function registerSlashCommands(): Promise<
+  { id: string; name: string }[]
+> {
+  if (!env.discordBotToken || !env.discordClientId) {
+    throw new Error(
+      "Need DISCORD_BOT_TOKEN and DISCORD_CLIENT_ID to register commands.",
+    );
+  }
+  const res = await fetch(
+    `${API}/applications/${env.discordClientId}/commands`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bot ${env.discordBotToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(SLASH_COMMANDS),
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Discord rejected commands: ${res.status} ${text}`);
+  }
+  const data = (await res.json()) as { id: string; name: string }[];
+  return data.map((c) => ({ id: c.id, name: c.name }));
+}
+
+/**
+ * GET the currently-registered global commands. Used to render the
+ * "what's live in Discord right now" indicator on /admin/discord.
+ */
+export async function listRegisteredCommands(): Promise<
+  { id: string; name: string }[] | null
+> {
+  if (!env.discordBotToken || !env.discordClientId) return null;
+  try {
+    const res = await fetch(
+      `${API}/applications/${env.discordClientId}/commands`,
+      { headers: { Authorization: `Bot ${env.discordBotToken}` } },
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { id: string; name: string }[];
+    return data.map((c) => ({ id: c.id, name: c.name }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Pull the latest username/avatar for an already-linked user via the
+ * bot's guild-member endpoint and persist them. Useful for periodic
+ * background refreshes (we don't keep an OAuth refresh token).
+ */
+export async function refreshDiscordIdentity(
+  profileId: string,
+  discordUserId: string,
+): Promise<boolean> {
+  const member = await fetchGuildMember(discordUserId);
+  if (!member?.user) return false;
+  try {
+    const admin = createAdminClient();
+    await admin
+      .from("profiles")
+      .update({
+        discord_username: member.user.global_name ?? member.user.username,
+        discord_avatar: member.user.avatar,
+      })
+      .eq("id", profileId);
+    return true;
+  } catch (err) {
+    console.error("[discord] identity refresh failed", err);
+    return false;
+  }
 }

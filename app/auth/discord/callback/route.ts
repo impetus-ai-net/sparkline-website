@@ -9,6 +9,9 @@ import {
   getDiscordSettings,
   isDiscordEnabled,
   revokeOauthToken,
+  sendDirectMessage,
+  postChannelMessage,
+  announcementEmbed,
 } from "@/lib/discord";
 import { env } from "@/lib/env";
 import { logAudit } from "@/lib/audit";
@@ -117,6 +120,36 @@ export async function GET(req: Request) {
     targetId: user.id,
     payload: { discord_user_id: discordUser.id, role },
   });
+
+  // Welcome the new linked member with a private DM. Best-effort —
+  // people disable DMs from server members all the time, and that's a
+  // soft fail.
+  await sendDirectMessage(discordUser.id, {
+    embeds: [
+      {
+        title: "Welcome to SparkLine 👋",
+        description: [
+          `Your SparkLine account is linked. We auto-assigned your **${role}** role and added you to the right channels.`,
+          "",
+          `Run \`/me\` anytime to check your status, \`/events\` for what's coming up, or open your dashboard:`,
+          `${env.siteUrl}/dashboard`,
+        ].join("\n"),
+        color: 0xfacc15,
+      },
+    ],
+  });
+
+  // Mirror the link to the admin feed so staff can see who joined.
+  if (settings.adminFeedChannelId) {
+    await postChannelMessage(settings.adminFeedChannelId, {
+      embeds: [
+        announcementEmbed({
+          title: `🔗 Linked: ${profile?.full_name ?? user.email ?? "user"}`,
+          body: `Role: \`${role}\` · Discord: <@${discordUser.id}>`,
+        }),
+      ],
+    });
+  }
 
   // We're done with the OAuth tokens — revoke them so a stolen callback
   // URL can't grant a lingering access window. We use the bot token for

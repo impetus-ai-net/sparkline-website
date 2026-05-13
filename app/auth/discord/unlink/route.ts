@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { kickFromGuild, removeRoleFromMember, getDiscordSettings } from "@/lib/discord";
+import {
+  kickFromGuild,
+  removeRoleFromMember,
+  getDiscordSettings,
+  postChannelMessage,
+  announcementEmbed,
+} from "@/lib/discord";
 import { logAudit } from "@/lib/audit";
 import { env } from "@/lib/env";
 
@@ -35,6 +41,21 @@ export async function POST() {
     const settings = await getDiscordSettings();
     for (const rid of Object.values(settings.roleIdByRole)) {
       if (rid) await removeRoleFromMember(profile.discord_user_id, rid);
+    }
+    if (settings.adminFeedChannelId) {
+      const { data: p } = await admin
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .maybeSingle();
+      await postChannelMessage(settings.adminFeedChannelId, {
+        embeds: [
+          announcementEmbed({
+            title: `🔌 Unlinked: ${p?.full_name ?? p?.email ?? "user"}`,
+            body: `Removed SparkLine-managed roles from <@${profile.discord_user_id}>.`,
+          }),
+        ],
+      });
     }
   }
 

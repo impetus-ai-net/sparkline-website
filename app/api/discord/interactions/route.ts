@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
-import { verifyInteractionSignature, postChannelMessage, announcementEmbed, getDiscordSettings, isDiscordEnabled } from "@/lib/discord";
+import {
+  verifyInteractionSignature,
+  postChannelMessage,
+  announcementEmbed,
+  eventEmbed,
+  getDiscordSettings,
+  isDiscordEnabled,
+  syncMemberRoles,
+  SLASH_COMMANDS,
+} from "@/lib/discord";
+import type { Role } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
@@ -72,6 +82,10 @@ export async function POST(req: Request) {
   const name: string = body.data?.name ?? "";
   const discordUserId: string =
     body.member?.user?.id ?? body.user?.id ?? "";
+  // Discord sends us the caller's current username/avatar on every
+  // interaction. Persist any drift so the dashboard card stays in sync
+  // without us hitting /users/@me again.
+  const interactionUser = body.member?.user ?? body.user;
 
   // Throttle commands per Discord user. /announce is the heaviest
   // (fan-out to all enrolled + announcements channel + email) so it
@@ -93,6 +107,20 @@ export async function POST(req: Request) {
 
   const admin = createAdminClient();
 
+  // Passive identity refresh — best-effort and silently ignored if the
+  // user isn't linked yet.
+  if (discordUserId && interactionUser) {
+    admin
+      .from("profiles")
+      .update({
+        discord_username:
+          interactionUser.global_name ?? interactionUser.username ?? null,
+        discord_avatar: interactionUser.avatar ?? null,
+      })
+      .eq("discord_user_id", discordUserId)
+      .then(() => {}, () => {});
+  }
+
   if (name === "me") {
     return await handleMe(admin, discordUserId);
   }
@@ -104,11 +132,153 @@ export async function POST(req: Request) {
   if (name === "cohort") {
     return await handleCohort(admin, discordUserId);
   }
+  if (name === "events") {
+    return await handleEvents(admin, discordUserId);
+  }
+  if (name === "sync") {
+    return await handleSync(admin, discordUserId);
+  }
+  if (name === "whois") {
+    return await handleWhois(admin, discordUserId, body);
+  }
+  if (name === "help") {
+    return handleHelp();
+  }
   if (name === "announce") {
     return await handleAnnounce(admin, discordUserId, body);
   }
 
   return ephemeral(`Unknown command: \`${name}\``);
+}
+
+function handleHelp() {
+  const lines = SLASH_COMMANDS.map((c) => `• \`/${c.name}\` — ${c.description}`);
+  return ephemeral(["**SparkLine slash commands**", ...lines].join("\n"));
+}
+
+async function handleSync(
+  admin: ReturnType<typeof createAdminClient>,
+  discordUserId: string,
+) {
+  if (!discordUserId) return ephemeral("Couldn't identify you.");
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("discord_user_id", discordUserId)
+    .maybeSingle();
+  if (!profile) {
+    return ephemeral(
+      `You haven't linked yet — link first: ${env.siteUrl}/dashboard/settings`,
+    );
+  }
+  try {
+    await syncMemberRoles(discordUserId, (profile.role as Role) ?? "student");
+    return ephemeral(`✅ Synced. Your role is **${profile.role}**.`);
+  } catch (err) {
+    console.error("[discord] /sync failed", err);
+    return ephemeral("Sync failed. Try again or ping an admin.");
+  }
+}
+
+async function handleEvents(
+  admin: ReturnType<typeof createAdminClient>,
+  discordUserId: string,
+) {
+  // Scope to caller's cohort if they're enrolled; otherwise show
+  // public events. Either way limit to 5 upcoming.
+  let cohortId: string | null = null;
+  if (discordUserId) {
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("discord_user_id", discordUserId)
+      .maybeSingle();
+    if (profile) {
+      const { data: enrollment } = await admin
+        .from("enrollments")
+        .select("cohort_id")
+        .eq("user_id", profile.id)
+        .maybeSingle();
+      cohortId = (enrollment as any)?.cohort_id ?? null;
+    }
+  }
+  const nowIso = new Date().toISOString();
+  let q = admin
+    .from("events")
+    .select("title, type, starts_at, ends_at, location, zoom_url, description, visibility, cohort:cohorts(name)")
+    .gte("starts_at", nowIso)
+    .order("starts_at", { ascending: true })
+    .limit(5);
+  if (cohortId) {
+    // Cohort-specific OR cohort-wide (cohort_id null) events.
+    q = q.or(`cohort_id.eq.${cohortId},cohort_id.is.null`);
+  } else {
+    q = q.eq("visibility", "public");
+  }
+  const { data: events } = await q;
+  if (!events || events.length === 0) {
+    return ephemeral("No upcoming events on the calendar.");
+  }
+  const embeds = (events as any[]).map((e) => {
+    const cohort = Array.isArray(e.cohort) ? e.cohort[0] : e.cohort;
+    return eventEmbed({
+      title: e.title,
+      description: e.description,
+      startsAt: e.starts_at,
+      endsAt: e.ends_at,
+      location: e.location,
+      zoomUrl: e.zoom_url,
+      type: e.type,
+      cohortName: cohort?.name ?? null,
+    });
+  });
+  return NextResponse.json({
+    type: CHANNEL_MESSAGE_WITH_SOURCE,
+    data: { embeds, flags: EPHEMERAL_FLAG },
+  });
+}
+
+async function handleWhois(
+  admin: ReturnType<typeof createAdminClient>,
+  discordUserId: string,
+  body: any,
+) {
+  if (!discordUserId) return ephemeral("Couldn't identify you.");
+  const { data: caller } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("discord_user_id", discordUserId)
+    .maybeSingle();
+  if (!caller || (caller.role !== "admin" && caller.role !== "mentor")) {
+    return ephemeral("Only admins and mentors can run /whois.");
+  }
+  const userOpt = (body.data?.options ?? []).find((o: any) => o.name === "user");
+  const targetDiscordId: string | undefined = userOpt?.value;
+  if (!targetDiscordId) return ephemeral("Pick a user to look up.");
+  // Discord ferries the target user object inside data.resolved.users
+  // — handy fallback when the user isn't linked.
+  const resolvedUser = body.data?.resolved?.users?.[targetDiscordId] as
+    | { username?: string; global_name?: string | null }
+    | undefined;
+
+  const { data: target } = await admin
+    .from("profiles")
+    .select("full_name, email, role, discord_username, discord_linked_at")
+    .eq("discord_user_id", targetDiscordId)
+    .maybeSingle();
+  if (!target) {
+    const tag = resolvedUser?.global_name ?? resolvedUser?.username ?? "user";
+    return ephemeral(`<@${targetDiscordId}> (\`${tag}\`) hasn't linked a SparkLine account.`);
+  }
+  const lines = [
+    `<@${targetDiscordId}> — **${target.full_name ?? target.email}**`,
+    `Role: \`${target.role}\``,
+    target.email ? `Email: ${target.email}` : "",
+    target.discord_linked_at
+      ? `Linked: <t:${Math.floor(new Date(target.discord_linked_at).getTime() / 1000)}:R>`
+      : "",
+  ].filter(Boolean);
+  return ephemeral(lines.join("\n"));
 }
 
 async function handleMe(admin: ReturnType<typeof createAdminClient>, discordUserId: string) {
