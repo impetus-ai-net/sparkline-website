@@ -104,6 +104,60 @@ a,
   color: #000;
 }
 
+/* Legal-page typography. We deliberately don't ship the Tailwind
+ * typography plugin (extra ~30kb of CSS the marketing site doesn't
+ * need); this small ruleset gives terms / privacy / refund pages a
+ * comfortable reading rhythm, WCAG-AA-passing body contrast, and clear
+ * heading hierarchy. */
+.legal-prose {
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  font-size: 16px;
+}
+.legal-prose h1,
+.legal-prose h2,
+.legal-prose h3 {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.legal-prose h2 {
+  font-size: 1.5rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+.legal-prose h3 {
+  font-size: 1.125rem;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+.legal-prose p {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+.legal-prose ul,
+.legal-prose ol {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+.legal-prose ul { list-style: disc; }
+.legal-prose ol { list-style: decimal; }
+.legal-prose li { margin-top: 0.35rem; }
+.legal-prose a {
+  color: #facc15;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.legal-prose a:hover { color: #fde047; }
+.legal-prose strong { color: #ffffff; font-weight: 600; }
+.legal-prose hr {
+  margin: 2.5rem 0;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 .glow-text {
   text-shadow: 0 0 40px rgba(250, 204, 21, 0.35);
 }

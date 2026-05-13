@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 const REF_KEY = "sparkline_ref";
 
@@ -40,7 +41,7 @@ export function SignupForm() {
       },
     });
     if (error) {
-      setError(error.message);
+      setError(friendlyAuthError(error));
       setLoading(false);
       return;
     }
@@ -55,54 +56,92 @@ export function SignupForm() {
 
   if (needsVerify) {
     return (
-      <div className="mt-6 rounded-lg border border-spark/30 bg-spark/5 p-4 text-sm text-white/80">
+      <div
+        role="status"
+        aria-live="polite"
+        className="mt-6 rounded-lg border border-spark/30 bg-spark/5 p-4 text-sm text-white/85"
+      >
         <p className="font-medium text-spark">Check your email</p>
-        <p className="mt-1 text-white/60">
-          We sent a verification link to <span className="text-white">{email}</span>. Click it to activate your account, then log in.
+        <p className="mt-1 text-white/70">
+          We sent a verification link to{" "}
+          <span className="text-white">{email}</span>. Click it to activate
+          your account, then log in.
+        </p>
+        <p className="mt-3 text-xs text-white/60">
+          Didn't get it? Check spam, or wait a minute before requesting another.
         </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
+    <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
       <div>
-        <Label htmlFor="fullName">Full name</Label>
+        <Label htmlFor="fullName" required>
+          Full name
+        </Label>
         <Input
           id="fullName"
+          autoComplete="name"
           required
+          aria-required="true"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
         />
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" required>
+          Email
+        </Label>
         <Input
           id="email"
           type="email"
+          inputMode="email"
           autoComplete="email"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           required
+          aria-required="true"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password" required>
+          Password
+        </Label>
         <Input
           id="password"
           type="password"
           autoComplete="new-password"
           minLength={8}
           required
+          aria-required="true"
+          aria-describedby="password-hint signup-error"
+          error={error ? true : undefined}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <p className="mt-1 text-xs text-white/40">At least 8 characters.</p>
+        <p id="password-hint" className="mt-1 text-xs text-white/55">
+          At least 8 characters. Use letters and numbers — avoid common words.
+        </p>
       </div>
-      <FieldError>{error}</FieldError>
+      <FieldError id="signup-error">{error}</FieldError>
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Creating account…" : "Create account"}
       </Button>
+      <p className="text-center text-xs text-white/55">
+        By creating an account you agree to our{" "}
+        <a href="/terms" className="underline-offset-2 hover:text-white hover:underline">
+          Terms
+        </a>{" "}
+        and{" "}
+        <a href="/privacy" className="underline-offset-2 hover:text-white hover:underline">
+          Privacy Policy
+        </a>
+        .
+      </p>
     </form>
   );
 }

@@ -4,8 +4,8 @@ export default function RefundPolicyPage() {
   return (
     <>
       <h1 className="text-4xl font-bold tracking-tight">Refund Policy</h1>
-      <p className="mt-2 text-sm text-white/50">
-        Last updated: {new Date().getFullYear()}
+      <p className="mt-2 text-sm text-white/60">
+        Last updated: May 12, 2026
       </p>
 
       <p>
