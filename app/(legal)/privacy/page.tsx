@@ -75,6 +75,17 @@ export default function PrivacyPage() {
         captured during application.
       </p>
 
+      <h2>Your ideas and IP</h2>
+      <p>
+        Anything you upload — pitch decks, business plans, customer
+        research, code, drafts — belongs to you. SparkLine will never
+        sell, license, or share the substance of your idea with third
+        parties for their own use. We don't take equity in your company
+        and we don't claim ownership of your IP. The only public
+        reference we may make is attribution (e.g. "built at SparkLine").
+        Full terms are in our <a href="/terms">Terms of Service</a>.
+      </p>
+
       <h2>Contact</h2>
       <p>
         Questions:{" "}

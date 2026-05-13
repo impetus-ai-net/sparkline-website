@@ -4,6 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
+import {
+  getOrCreateStripeCustomer,
+  stripeErrorMessage,
+} from "@/lib/stripe-customer";
 
 export async function POST(req: Request) {
   const supabase = createClient();
@@ -55,82 +59,81 @@ export async function POST(req: Request) {
   const cohortName = app.cohort?.name ?? "SparkLine cohort";
   const stripePriceId: string | null = app.cohort?.stripe_price_id ?? null;
 
-  // Get / create Stripe customer
   const { data: profile } = await admin
     .from("profiles")
     .select("stripe_customer_id, email, full_name")
     .eq("id", user.id)
     .single();
 
-  let customerId = profile?.stripe_customer_id ?? null;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: profile?.email ?? user.email ?? undefined,
-      name: profile?.full_name ?? undefined,
-      metadata: { supabase_user_id: user.id },
-    });
-    customerId = customer.id;
-    await admin
-      .from("profiles")
-      .update({ stripe_customer_id: customerId })
-      .eq("id", user.id);
-  }
-
   // Always use the canonical site URL — never a request-controlled
   // header. The Origin header is attacker-controllable and would let a
   // forged checkout redirect land on a lookalike domain.
   const origin = env.siteUrl;
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer: customerId,
-    line_items: [
-      stripePriceId
-        ? { quantity: 1, price: stripePriceId }
-        : {
-            quantity: 1,
-            price_data: {
-              currency: "usd",
-              unit_amount: priceCents,
-              product_data: {
-                name: `SparkLine — ${cohortName}`,
-                description:
-                  "One-time enrollment fee for the SparkLine accelerator.",
+  try {
+    const customerId = await getOrCreateStripeCustomer(
+      admin,
+      {
+        id: user.id,
+        email: profile?.email ?? null,
+        full_name: profile?.full_name ?? null,
+        stripe_customer_id: profile?.stripe_customer_id ?? null,
+      },
+      user.email,
+    );
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer: customerId,
+      line_items: [
+        stripePriceId
+          ? { quantity: 1, price: stripePriceId }
+          : {
+              quantity: 1,
+              price_data: {
+                currency: "usd",
+                unit_amount: priceCents,
+                product_data: {
+                  name: `SparkLine — ${cohortName}`,
+                  description:
+                    "One-time enrollment fee for the SparkLine accelerator.",
+                },
               },
             },
-          },
-    ],
-    metadata: {
-      application_id: app.id,
-      user_id: user.id,
-      cohort_id: app.cohort_id ?? "",
-    },
-    payment_intent_data: {
+      ],
       metadata: {
         application_id: app.id,
         user_id: user.id,
+        cohort_id: app.cohort_id ?? "",
       },
-    },
-    success_url: `${origin}/dashboard/application?paid=1`,
-    cancel_url: `${origin}/dashboard/application?canceled=1`,
-  });
+      payment_intent_data: {
+        metadata: {
+          application_id: app.id,
+          user_id: user.id,
+        },
+      },
+      success_url: `${origin}/dashboard/application?paid=1`,
+      cancel_url: `${origin}/dashboard/application?canceled=1`,
+    });
 
-  // Stash session id on the application for webhook correlation
-  await admin
-    .from("applications")
-    .update({ stripe_session_id: session.id })
-    .eq("id", app.id);
+    await admin
+      .from("applications")
+      .update({ stripe_session_id: session.id })
+      .eq("id", app.id);
 
-  // Insert pending payment row
-  await admin.from("payments").insert({
-    user_id: user.id,
-    application_id: app.id,
-    cohort_id: app.cohort_id,
-    stripe_session_id: session.id,
-    amount_cents: priceCents,
-    currency: "usd",
-    status: "pending",
-  });
+    await admin.from("payments").insert({
+      user_id: user.id,
+      application_id: app.id,
+      cohort_id: app.cohort_id,
+      stripe_session_id: session.id,
+      amount_cents: priceCents,
+      currency: "usd",
+      status: "pending",
+    });
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    console.error("[stripe checkout] failed", err);
+    return NextResponse.json({ error: stripeErrorMessage(err) }, { status: 500 });
+  }
 }
