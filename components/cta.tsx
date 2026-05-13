@@ -62,6 +62,18 @@ export default function CTA({ config }: { config: SiteConfig }) {
               <Bullet>Pitch to real angel investors on Demo Day</Bullet>
               <Bullet>Walk away with a fundable startup package</Bullet>
             </ul>
+            {(derived.spotsLabel || derived.applicationsCountdownLabel) && (
+              <div className="rounded-lg border border-spark/30 bg-spark/[0.06] px-3 py-2 text-xs text-spark">
+                {derived.applicationsCountdownLabel || derived.spotsLabel}
+                {derived.applicationsCountdownLabel && derived.spotsLabel && (
+                  <>
+                    {" "}
+                    <span className="text-white/60">·</span>{" "}
+                    <span className="text-white/85">{derived.spotsLabel}</span>
+                  </>
+                )}
+              </div>
+            )}
             <div>
               <Link
                 href="/signup"

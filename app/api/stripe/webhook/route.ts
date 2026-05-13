@@ -87,12 +87,14 @@ export async function POST(req: Request) {
               .select("user_id, kind, description, amount_cents")
               .eq("id", chargeId)
               .single();
+            const receiptUrl = await fetchReceiptUrl(piId);
             await admin
               .from("user_charges")
               .update({
                 status: "paid",
                 paid_at: new Date().toISOString(),
                 stripe_payment_intent_id: piId,
+                stripe_receipt_url: receiptUrl,
               })
               .eq("id", chargeId);
             if (charge) {
@@ -129,11 +131,13 @@ export async function POST(req: Request) {
           })
           .eq("id", applicationId);
 
+        const receiptUrl = await fetchReceiptUrl(paymentIntentId);
         await admin
           .from("payments")
           .update({
             status: "succeeded",
             stripe_payment_intent_id: paymentIntentId,
+            stripe_receipt_url: receiptUrl,
           })
           .eq("stripe_session_id", session.id);
 
@@ -327,4 +331,30 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+/**
+ * Resolves a Stripe-hosted receipt URL for a payment intent.
+ *
+ * The receipt URL lives on the underlying Charge object, not the
+ * PaymentIntent itself, so we expand `latest_charge` and pull it off
+ * there. Returns null on any error so the webhook never fails just
+ * because the receipt URL couldn't be fetched — the inbox tolerates a
+ * missing URL gracefully.
+ */
+async function fetchReceiptUrl(
+  paymentIntentId: string | null,
+): Promise<string | null> {
+  if (!paymentIntentId) return null;
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ["latest_charge"],
+    });
+    const latest = pi.latest_charge;
+    if (!latest || typeof latest === "string") return null;
+    return latest.receipt_url ?? null;
+  } catch (err) {
+    console.error("[stripe webhook] receipt url fetch failed", err);
+    return null;
+  }
 }

@@ -22,6 +22,8 @@ import {
   CheckCircle,
   FolderArchive,
   Rocket,
+  Activity,
+  Mail,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -74,6 +76,7 @@ export const STUDENT_NAV_GROUPS: NavGroup[] = [
     label: "Workspace",
     items: [
       { href: "/dashboard/community", label: "Community", icon: MessagesSquare },
+      { href: "/dashboard/announcements", label: "Announcements", icon: Megaphone },
       { href: "/dashboard/ai", label: "AI co-founder", icon: Sparkles },
       { href: "/dashboard/files", label: "Files", icon: FolderOpen },
       { href: "/dashboard/intros", label: "Investor intros", icon: Handshake },
@@ -83,6 +86,7 @@ export const STUDENT_NAV_GROUPS: NavGroup[] = [
     label: "Account",
     items: [
       { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+      { href: "/dashboard/referrals", label: "Refer friends", icon: Star },
       { href: "/dashboard/settings", label: "Settings", icon: Settings },
     ],
   },
@@ -155,6 +159,10 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: "Operations",
     items: [
+      { href: "/admin/pulse", label: "Pulse", icon: Activity },
+      { href: "/admin/ai-usage", label: "AI usage", icon: Sparkles },
+      { href: "/admin/email", label: "Email metrics", icon: Mail },
+      { href: "/admin/referrals", label: "Referrals", icon: Star },
       { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck },
       { href: "/admin/discord", label: "Discord", icon: MessagesSquare },
       { href: "/admin/audit", label: "Audit log", icon: ScrollText },

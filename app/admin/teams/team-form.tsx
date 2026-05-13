@@ -133,6 +133,103 @@ export function TeamForm({
         onChange={(v) => setT({ ...t, is_public: v })}
       />
 
+      {/* Cap-table snapshot. Optional — leave everything blank to hide
+          the section from investor views. Inputs are in WHOLE DOLLARS,
+          converted to cents on the way in/out so the DB stays in cents
+          (matches the rest of the app). */}
+      <details className="rounded-lg border border-white/10 bg-white/[0.02] p-4 open:bg-white/[0.04]">
+        <summary className="cursor-pointer select-none text-sm font-semibold text-white">
+          Cap-table (optional)
+          <span className="ml-2 text-xs font-normal text-white/45">
+            Fundraising snapshot — shown to investors when populated.
+          </span>
+        </summary>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Round kind</Label>
+            <Select
+              value={t.round_kind ?? ""}
+              onChange={(e) =>
+                setT({
+                  ...t,
+                  round_kind:
+                    (e.target.value as TeamInput["round_kind"]) || null,
+                })
+              }
+            >
+              <option value="">— Not raising —</option>
+              <option value="pre_seed">Pre-seed</option>
+              <option value="safe">SAFE</option>
+              <option value="angel">Angel</option>
+              <option value="seed">Seed</option>
+              <option value="grant">Grant</option>
+              <option value="other">Other</option>
+            </Select>
+          </div>
+          <div>
+            <Label>Closed on</Label>
+            <Input
+              type="date"
+              value={t.round_closed_on ?? ""}
+              onChange={(e) =>
+                setT({ ...t, round_closed_on: e.target.value || null })
+              }
+            />
+          </div>
+          <div>
+            <Label>Raised (USD)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={
+                t.raised_cents != null ? Math.round(t.raised_cents / 100) : ""
+              }
+              onChange={(e) => {
+                const v = e.target.value;
+                setT({
+                  ...t,
+                  raised_cents: v === "" ? null : Math.round(Number(v) * 100),
+                });
+              }}
+              placeholder="e.g. 50000"
+            />
+          </div>
+          <div>
+            <Label>Post-money valuation (USD)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={
+                t.post_money_cents != null
+                  ? Math.round(t.post_money_cents / 100)
+                  : ""
+              }
+              onChange={(e) => {
+                const v = e.target.value;
+                setT({
+                  ...t,
+                  post_money_cents:
+                    v === "" ? null : Math.round(Number(v) * 100),
+                });
+              }}
+              placeholder="e.g. 500000"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <Label>Lead investor</Label>
+            <Input
+              value={t.lead_investor ?? ""}
+              onChange={(e) =>
+                setT({ ...t, lead_investor: e.target.value || null })
+              }
+              placeholder="e.g. Acme Ventures"
+            />
+          </div>
+        </div>
+      </details>
+
       {error && <FieldError>{error}</FieldError>}
 
       <div className="flex flex-wrap items-center justify-between gap-3 pt-3">

@@ -16,11 +16,13 @@ export function StudentSidebar({
   aiAccess,
   discordEnabled,
   enrolled,
+  referralsEnabled,
 }: {
   role: Role;
   aiAccess: boolean;
   discordEnabled: boolean;
   enrolled: boolean;
+  referralsEnabled: boolean;
 }) {
   const showAdminBack = role === "admin";
 
@@ -41,6 +43,7 @@ export function StudentSidebar({
         filterItem={(it) => {
           if (it.href === "/dashboard/ai") return aiAccess;
           if (it.href === "/dashboard/community") return discordEnabled;
+          if (it.href === "/dashboard/referrals") return referralsEnabled;
           if (!enrolled && ENROLLED_ONLY_HREFS.has(it.href)) return false;
           return true;
         }}

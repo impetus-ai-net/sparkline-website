@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { Card, StatusBadge } from "@/components/ui/card";
 import { LocalTime } from "@/components/ui/local-time";
 import { PortalButton } from "./portal-button";
 import { ChargePayButton } from "@/components/charge-pay-button";
+import { Receipt } from "lucide-react";
 
 export const metadata = { title: "Billing · SparkLine" };
 
@@ -43,14 +45,23 @@ export default async function BillingPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Billing</h1>
           <p className="mt-1 text-sm text-white/55">
             Your payment history and any fees or fines on your account.
           </p>
         </div>
-        {hasStripeCustomer && <PortalButton />}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard/billing/receipts"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 hover:bg-white/10"
+          >
+            <Receipt className="h-3.5 w-3.5" />
+            Receipts
+          </Link>
+          {hasStripeCustomer && <PortalButton />}
+        </div>
       </div>
 
       {pending.length > 0 && (

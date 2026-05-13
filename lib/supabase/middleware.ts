@@ -25,7 +25,13 @@ function roleHome(role: RoleLike): string {
 }
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  // Stamp the request pathname onto a header so downstream server
+  // components (admin layout, page-level guards) can read it via
+  // next/headers without parsing the URL on their own. Next.js doesn't
+  // expose pathname to RSC by default.
+  const reqHeaders = new Headers(request.headers);
+  reqHeaders.set("x-pathname", request.nextUrl.pathname);
+  let response = NextResponse.next({ request: { headers: reqHeaders } });
 
   // Middleware reads per-user state (role, pending fines, etc.) on every
   // request. Next.js otherwise caches GET fetches inside middleware,
@@ -46,7 +52,10 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          response = NextResponse.next({ request });
+          // Re-issue the response with our augmented headers — passing the
+          // bare `request` here would lose the x-pathname header we just
+          // set above.
+          response = NextResponse.next({ request: { headers: reqHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

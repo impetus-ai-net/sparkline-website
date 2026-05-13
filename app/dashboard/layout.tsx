@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { StudentSidebar } from "@/components/dashboard/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { getThemeFromCookie } from "@/lib/theme";
+import { getSiteConfig } from "@/lib/site-config";
 
 export default async function DashboardLayout({
   children,
@@ -43,10 +44,12 @@ export default async function DashboardLayout({
     .maybeSingle();
   const enrolled = !!enrollment || profile.role === "admin";
 
-  const [aiAccess, discordEnabled] = await Promise.all([
+  const [aiAccess, discordEnabled, siteConfig] = await Promise.all([
     canUseAi(profile.role),
     isDiscordEnabled(),
+    getSiteConfig(),
   ]);
+  const referralsEnabled = siteConfig.settings.referralsEnabled;
 
   return (
     <div
@@ -57,6 +60,7 @@ export default async function DashboardLayout({
         aiAccess={aiAccess}
         discordEnabled={discordEnabled}
         enrolled={enrolled}
+        referralsEnabled={referralsEnabled}
       />
       <div className="flex flex-1 flex-col">
         <MobileNav
@@ -65,6 +69,7 @@ export default async function DashboardLayout({
           aiAccess={aiAccess}
           discordEnabled={discordEnabled}
           enrolled={enrolled}
+          referralsEnabled={referralsEnabled}
         />
         <main className="flex-1 px-5 py-6 md:px-10 md:py-10">{children}</main>
       </div>

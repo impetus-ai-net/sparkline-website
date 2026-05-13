@@ -29,6 +29,11 @@ export default async function NewTeamPage() {
             pitch_deck_url: "",
             website_url: "",
             is_public: false,
+            raised_cents: null,
+            post_money_cents: null,
+            lead_investor: null,
+            round_kind: null,
+            round_closed_on: null,
           }}
           cohorts={cohorts ?? []}
         />

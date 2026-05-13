@@ -152,4 +152,147 @@ export const Templates = {
       cta: { url: `${env.siteUrl}/dashboard/events`, label: "All events" },
     }),
   }),
+
+  /**
+   * Weekly "students who went quiet" digest for mentors + admins.
+   * Lists each at-risk student with the assigned mentor's name (or a
+   * placeholder when unassigned) so the recipient knows whose turn it
+   * is to reach out.
+   */
+  atRiskDigest: (args: {
+    recipientName: string | null;
+    scope: "admin" | "mentor";
+    cohortName: string | null;
+    students: Array<{
+      name: string;
+      cohortName: string | null;
+      mentorName: string | null;
+      weeksSilent: number;
+    }>;
+  }) => {
+    const rows = args.students
+      .map(
+        (s) => `
+          <li style="margin:0 0 10px 0">
+            <strong style="color:#fff">${escape(s.name)}</strong>
+            ${s.cohortName ? `<span style="color:#888"> · ${escape(s.cohortName)}</span>` : ""}
+            <br>
+            <span style="color:#bbb">${s.weeksSilent} week${s.weeksSilent === 1 ? "" : "s"} without a check-in${
+              s.mentorName
+                ? ` · mentor <strong style="color:#fff">${escape(s.mentorName)}</strong>`
+                : args.scope === "admin"
+                  ? " · <span style=\"color:#facc15\">no mentor assigned</span>"
+                  : ""
+            }</span>
+          </li>`,
+      )
+      .join("");
+    const subjectScope =
+      args.scope === "mentor"
+        ? "your students"
+        : args.cohortName
+          ? args.cohortName
+          : "the cohort";
+    return {
+      subject: `At-risk check: ${subjectScope}`,
+      html: layout({
+        preheader: `${args.students.length} student${args.students.length === 1 ? "" : "s"} flagged this week`,
+        body: `
+          <h1 style="margin:0 0 12px 0;font-size:20px;color:#fff">Quiet for ${args.students[0]?.weeksSilent ?? 2}+ weeks</h1>
+          <p>The following${args.scope === "mentor" ? " students you mentor" : ""} haven't checked in for two weeks running. A quick DM tends to be enough to pull them back.</p>
+          <ul style="padding-left:18px;margin:18px 0 0 0">${rows}</ul>
+        `,
+        cta: {
+          url: `${env.siteUrl}${args.scope === "mentor" ? "/mentor/students" : "/admin/students"}`,
+          label: args.scope === "mentor" ? "Open mentor panel" : "Open admin panel",
+        },
+      }),
+    };
+  },
+
+  /**
+   * "Your card is expiring soon" — fires from the daily card-expiring
+   * cron when a customer's default payment method is within 30 days of
+   * expiring. Includes a deep link into the Stripe customer portal so
+   * the student can update without contacting support.
+   */
+  cardExpiring: (args: {
+    name?: string | null;
+    brand: string;
+    last4: string;
+    expMonth: number;
+    expYear: number;
+    portalUrl: string;
+  }) => ({
+    subject: "Your card on file is expiring",
+    html: layout({
+      preheader: `${args.brand} •••• ${args.last4} expires ${args.expMonth}/${String(args.expYear).slice(-2)}`,
+      body: `
+        <h1 style="margin:0 0 12px 0;font-size:20px;color:#fff">Heads up${args.name ? `, ${escape(args.name)}` : ""}</h1>
+        <p>Your <strong>${escape(args.brand)} ${args.last4}</strong> on file expires <strong>${args.expMonth}/${String(args.expYear).slice(-2)}</strong>. If you don't update it, any upcoming fees or fines on your account may fail to charge.</p>
+        <p style="margin-top:10px;color:#888">No payment is being charged right now — this is just a heads-up.</p>
+      `,
+      cta: { url: args.portalUrl, label: "Update card" },
+    }),
+  }),
+
+  /**
+   * Weekly cohort highlights — one email per active cohort, sent to
+   * every enrolled student. Pulls real check-in copy so the cohort
+   * sees what teammates have been shipping, not generic platitudes.
+   */
+  cohortDigest: (args: {
+    cohortName: string;
+    weekRange: string;
+    totals: {
+      checkins: number;
+      activeStudents: number;
+      enrolled: number;
+    };
+    highlights: { name: string | null; accomplished: string }[];
+    upcomingEvents: { title: string; startsAt: string }[];
+  }) => {
+    const highlightItems = args.highlights
+      .map(
+        (h) => `
+          <li style="margin:0 0 12px 0">
+            <strong style="color:#fff">${escape(h.name ?? "A student")}</strong>
+            <br>
+            <span style="color:#bbb">${escape(h.accomplished)}</span>
+          </li>`,
+      )
+      .join("");
+    const eventItems = args.upcomingEvents
+      .map(
+        (e) =>
+          `<li style="margin:0 0 6px 0;color:#bbb">${escape(e.title)} · <span style="color:#888">${new Date(e.startsAt).toLocaleString()}</span></li>`,
+      )
+      .join("");
+    return {
+      subject: `${args.cohortName} · what shipped this week`,
+      html: layout({
+        preheader: `${args.totals.checkins} check-ins from ${args.totals.activeStudents} students`,
+        body: `
+          <h1 style="margin:0 0 6px 0;font-size:22px;color:#fff">This week in ${escape(args.cohortName)}</h1>
+          <p style="color:#888;margin:0 0 18px 0">${escape(args.weekRange)}</p>
+          <p style="margin:0 0 18px 0">${args.totals.activeStudents} of ${args.totals.enrolled} students checked in. Here's what they shipped:</p>
+          ${
+            args.highlights.length > 0
+              ? `<ul style="padding-left:18px;margin:0 0 20px 0">${highlightItems}</ul>`
+              : `<p style="color:#888">No check-ins this week — be the first next week.</p>`
+          }
+          ${
+            args.upcomingEvents.length > 0
+              ? `<h2 style="font-size:14px;color:#facc15;margin:24px 0 10px 0;text-transform:uppercase;letter-spacing:0.08em">Coming up</h2>
+                 <ul style="padding-left:18px;margin:0">${eventItems}</ul>`
+              : ""
+          }
+        `,
+        cta: {
+          url: `${env.siteUrl}/dashboard`,
+          label: "Open dashboard",
+        },
+      }),
+    };
+  },
 };

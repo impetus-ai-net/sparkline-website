@@ -22,12 +22,40 @@ export type AnnouncementInput = {
 
 export async function broadcastAnnouncement(
   input: AnnouncementInput,
-): Promise<{ recipients: number; discordPosted: boolean }> {
-  await assertAdmin();
+): Promise<{ recipients: number; discordPosted: boolean; announcementId: string | null }> {
+  const { userId: authorId } = await assertAdmin();
   if (!input.title.trim() || !input.body.trim()) {
     throw new Error("Title and body are required.");
   }
   const admin = createAdminClient();
+
+  // Persist the announcement so the dashboard can show past
+  // announcements + collect reactions. Done before the fan-out so the
+  // notification "link" can deep-link straight to the announcement.
+  let announcementId: string | null = null;
+  try {
+    const { data: ann, error: annErr } = await admin
+      .from("announcements")
+      .insert({
+        cohort_id: input.cohortId,
+        author_id: authorId,
+        title: input.title.trim(),
+        body: input.body.trim(),
+      })
+      .select("id")
+      .single();
+    if (annErr) {
+      // Older deployments may not have run 0027 yet; degrade gracefully
+      // — the broadcast still happens, just without a persisted row.
+      if (!/relation .*announcements.* does not exist/i.test(annErr.message)) {
+        console.error("[announcements] insert failed", annErr);
+      }
+    } else {
+      announcementId = ann?.id ?? null;
+    }
+  } catch (err) {
+    console.error("[announcements] insert threw", err);
+  }
 
   let q = admin
     .from("enrollments")
@@ -36,6 +64,10 @@ export async function broadcastAnnouncement(
   const { data: rows } = await q;
   const recipients = (rows ?? []) as any[];
 
+  const notificationLink = announcementId
+    ? `/dashboard/announcements#a-${announcementId}`
+    : "/dashboard";
+
   // Always create in-app notifications.
   await notifyMany(
     recipients.map((r) => ({
@@ -43,7 +75,7 @@ export async function broadcastAnnouncement(
       type: "announcement",
       title: input.title.trim(),
       body: input.body.trim().slice(0, 240),
-      link: "/dashboard",
+      link: notificationLink,
     })),
   );
 
@@ -107,7 +139,11 @@ export async function broadcastAnnouncement(
     },
   });
 
-  return { recipients: recipients.length, discordPosted };
+  return {
+    recipients: recipients.length,
+    discordPosted,
+    announcementId,
+  };
 }
 
 function escape(s: string) {

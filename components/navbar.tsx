@@ -9,7 +9,7 @@ const LINKS = [
   { href: "/#how-it-works", label: "Program" },
   { href: "/#curriculum", label: "Curriculum" },
   { href: "/showcase", label: "Showcase" },
-  { href: "/#compare", label: "Compare" },
+  { href: "/alumni", label: "Alumni" },
   { href: "/#faq", label: "FAQ" },
 ] as const;
 

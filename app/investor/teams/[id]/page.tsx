@@ -22,7 +22,7 @@ export default async function InvestorTeamDetailPage({
   const { data: team } = await admin
     .from("teams")
     .select(
-      "id, name, tagline, description, logo_url, logo_status, website_url, cohort:cohorts(name)",
+      "id, name, tagline, description, logo_url, logo_status, website_url, raised_cents, post_money_cents, lead_investor, round_kind, round_closed_on, tear_sheet, tear_sheet_generated_at, cohort:cohorts(name)",
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -110,6 +110,34 @@ export default async function InvestorTeamDetailPage({
         </Card>
       )}
 
+      <CapTableBlock
+        raisedCents={(team as any).raised_cents}
+        postMoneyCents={(team as any).post_money_cents}
+        leadInvestor={(team as any).lead_investor}
+        roundKind={(team as any).round_kind}
+        roundClosedOn={(team as any).round_closed_on}
+      />
+
+      {(team as any).tear_sheet && (
+        <Card className="mt-6">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-base font-semibold">Tear sheet</h2>
+            {(team as any).tear_sheet_generated_at && (
+              <span className="text-[11px] text-white/40">
+                AI-generated · updated{" "}
+                <LocalTime
+                  value={(team as any).tear_sheet_generated_at}
+                  mode="date"
+                />
+              </span>
+            )}
+          </div>
+          <p className="mt-3 whitespace-pre-wrap text-sm text-white/85">
+            {(team as any).tear_sheet}
+          </p>
+        </Card>
+      )}
+
       <Card className="mt-6">
         <h2 className="text-base font-semibold">Team</h2>
         <ul className="mt-3 space-y-2">
@@ -169,6 +197,116 @@ export default async function InvestorTeamDetailPage({
 
       <div className="mt-6">
         <TeamThread teamId={params.id} messages={(messages ?? []) as any[]} />
+      </div>
+    </div>
+  );
+}
+
+const ROUND_LABEL: Record<string, string> = {
+  pre_seed: "Pre-seed",
+  safe: "SAFE",
+  angel: "Angel",
+  seed: "Seed",
+  grant: "Grant",
+  other: "Other",
+};
+
+function fmtUsd(cents: number) {
+  // Compact for figures over $1M so the tile doesn't run out of room
+  // (e.g. "$1.5M post-money"). Below that, full dollar amount with
+  // grouping reads better.
+  if (cents >= 1_000_000_00) {
+    return `$${(cents / 100_000_000).toFixed(cents % 100_000_000 === 0 ? 0 : 1)}M`;
+  }
+  if (cents >= 100_000_00) {
+    return `$${Math.round(cents / 100_000) / 10}M`;
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}
+
+function CapTableBlock({
+  raisedCents,
+  postMoneyCents,
+  leadInvestor,
+  roundKind,
+  roundClosedOn,
+}: {
+  raisedCents: number | null;
+  postMoneyCents: number | null;
+  leadInvestor: string | null;
+  roundKind: string | null;
+  roundClosedOn: string | null;
+}) {
+  // If the team hasn't filled in any cap-table fields, hide the block —
+  // showing "Raised: —" implies a failure to raise, which we don't want.
+  if (!raisedCents && !postMoneyCents && !leadInvestor && !roundKind) {
+    return null;
+  }
+  return (
+    <Card className="mt-6">
+      <h2 className="text-base font-semibold">Cap-table snapshot</h2>
+      <p className="mt-1 text-[11px] text-white/40">
+        Self-reported by the team. Not audited by SparkLine.
+      </p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-4">
+        {roundKind && (
+          <CapField
+            label="Round"
+            value={ROUND_LABEL[roundKind] ?? roundKind}
+          />
+        )}
+        {raisedCents != null && (
+          <CapField label="Raised" value={fmtUsd(raisedCents)} tone="spark" />
+        )}
+        {postMoneyCents != null && (
+          <CapField label="Post-money" value={fmtUsd(postMoneyCents)} />
+        )}
+        {roundClosedOn && (
+          <CapField
+            label="Closed"
+            value={new Date(`${roundClosedOn}T00:00:00Z`).toLocaleDateString(
+              "en-US",
+              { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" },
+            )}
+          />
+        )}
+      </div>
+      {leadInvestor && (
+        <p className="mt-4 text-sm text-white/75">
+          <span className="text-xs uppercase tracking-wider text-white/45">
+            Lead{" "}
+          </span>
+          <span className="ml-1">{leadInvestor}</span>
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function CapField({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "spark";
+}) {
+  return (
+    <div>
+      <div className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/45">
+        {label}
+      </div>
+      <div
+        className={`mt-1 text-lg font-semibold tracking-tight ${
+          tone === "spark" ? "text-spark" : "text-white"
+        }`}
+      >
+        {value}
       </div>
     </div>
   );

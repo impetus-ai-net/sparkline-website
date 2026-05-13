@@ -33,6 +33,11 @@ export const env = {
   // for first-run testing only.
   resendFrom:
     process.env.RESEND_FROM ?? "SparkLine <onboarding@resend.dev>",
+  // Svix signing secret from the Resend webhooks dashboard. Looks like
+  // "whsec_xxx". When unset, /api/resend/webhook returns 400 — we
+  // refuse to ingest unsigned events because the table is service-role
+  // writable and an open endpoint would be a denial-of-service vector.
+  resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET,
 
   discordBotToken: process.env.DISCORD_BOT_TOKEN,
   discordGuildId: process.env.DISCORD_GUILD_ID,

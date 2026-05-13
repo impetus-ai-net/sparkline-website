@@ -133,6 +133,77 @@ export async function decideApplication(
   revalidatePath("/admin");
 }
 
+/**
+ * Bulk equivalent of decideApplication. Runs sequentially — each call
+ * already does an email send + in-app notify + (on accept) a Discord
+ * sync, so a parallel fan-out would hammer those services and is more
+ * likely to trip rate limits than save real time. Returns counts so the
+ * UI can surface "X succeeded, Y failed" without inventing its own
+ * accounting.
+ *
+ * Skips applications that aren't in a decidable state ("submitted" or
+ * "draft"). Already-decided rows are returned in `skipped` so the
+ * reviewer knows they weren't silently no-op'd.
+ */
+export async function bulkDecideApplications(input: {
+  applicationIds: string[];
+  decision: "accepted" | "rejected";
+  notes: string;
+}): Promise<{ succeeded: number; failed: number; skipped: number }> {
+  await assertAdmin();
+  if (!input.applicationIds.length) {
+    return { succeeded: 0, failed: 0, skipped: 0 };
+  }
+  // Hard cap so a reviewer who select-alls a thousand rows by accident
+  // can't kick off a fan-out that takes minutes. 100 is generous for a
+  // typical batch.
+  if (input.applicationIds.length > 100) {
+    throw new Error("Too many applications selected (max 100).");
+  }
+
+  const admin = createAdminClient();
+  const { data: existing, error: fetchErr } = await admin
+    .from("applications")
+    .select("id, status")
+    .in("id", input.applicationIds);
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  const decidable = new Set(
+    (existing ?? [])
+      .filter((a: any) => a.status === "submitted" || a.status === "draft")
+      .map((a: any) => a.id as string),
+  );
+  const skipped = input.applicationIds.length - decidable.size;
+
+  let succeeded = 0;
+  let failed = 0;
+  for (const id of input.applicationIds) {
+    if (!decidable.has(id)) continue;
+    try {
+      await decideApplication(id, input.decision, input.notes);
+      succeeded++;
+    } catch (err) {
+      console.error("[applications] bulk decide failed for", id, err);
+      failed++;
+    }
+  }
+
+  await logAudit({
+    action: `application.bulk_${input.decision}`,
+    targetType: "application",
+    payload: {
+      requested: input.applicationIds.length,
+      succeeded,
+      failed,
+      skipped,
+    },
+  });
+
+  revalidatePath("/admin/applications");
+  revalidatePath("/admin");
+  return { succeeded, failed, skipped };
+}
+
 export async function reopenApplication(applicationId: string) {
   await assertAdmin();
   const admin = createAdminClient();

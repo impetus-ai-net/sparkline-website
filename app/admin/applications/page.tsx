@@ -1,28 +1,46 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Card, StatusBadge } from "@/components/ui/card";
-import { LocalTime } from "@/components/ui/local-time";
+import { Card } from "@/components/ui/card";
+import { ApplicationsBulkList } from "./bulk-list";
+import { Sparkles } from "lucide-react";
 
 export const metadata = { title: "Applications · Admin" };
 
 export default async function AdminApplicationsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { status?: string; sort?: string };
 }) {
   const admin = createAdminClient();
   const status = searchParams.status;
+  const sort = searchParams.sort === "score" ? "score" : "recent";
 
   let q = admin
     .from("applications")
     .select(
-      "id, full_name, age, status, created_at, submitted_at, why_join, profile:profiles!applications_user_id_fkey(email)",
-    )
-    .order("created_at", { ascending: false });
+      "id, full_name, age, status, created_at, submitted_at, why_join, ai_score, ai_reviewed_at, profile:profiles!applications_user_id_fkey(email)",
+    );
+  if (sort === "score") {
+    // Highest score first, unscored last. Supabase's PostgREST treats
+    // NULLs as "less than" by default in descending order, which is what
+    // we want — top scores rise to the top, unscored applications sink.
+    q = q
+      .order("ai_score", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+  } else {
+    q = q.order("created_at", { ascending: false });
+  }
   if (status && status !== "all") q = q.eq("status", status);
   const { data: apps } = await q;
 
   const filters = ["all", "submitted", "accepted", "rejected", "paid", "draft"];
+  const sortParam = (s: string) => {
+    const params = new URLSearchParams();
+    if (status && status !== "all") params.set("status", status);
+    if (s !== "recent") params.set("sort", s);
+    const qs = params.toString();
+    return qs ? `/admin/applications?${qs}` : "/admin/applications";
+  };
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -41,13 +59,18 @@ export default async function AdminApplicationsPage({
         </a>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="mt-6 flex flex-wrap items-center gap-2">
         {filters.map((f) => {
           const active = (status ?? "all") === f;
+          const params = new URLSearchParams();
+          if (f !== "all") params.set("status", f);
+          if (sort === "score") params.set("sort", "score");
+          const qs = params.toString();
+          const href = qs ? `/admin/applications?${qs}` : "/admin/applications";
           return (
             <Link
               key={f}
-              href={f === "all" ? "/admin/applications" : `/admin/applications?status=${f}`}
+              href={href}
               className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition ${
                 active
                   ? "border-spark bg-spark/10 text-spark"
@@ -58,46 +81,46 @@ export default async function AdminApplicationsPage({
             </Link>
           );
         })}
+        <span className="ml-2 h-4 w-px bg-white/10" aria-hidden />
+        <span className="text-[10px] uppercase tracking-wider text-white/40">
+          Sort
+        </span>
+        <Link
+          href={sortParam("recent")}
+          className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition ${
+            sort === "recent"
+              ? "border-spark bg-spark/10 text-spark"
+              : "border-white/15 text-white/60 hover:border-white/30 hover:text-white"
+          }`}
+        >
+          Newest
+        </Link>
+        <Link
+          href={sortParam("score")}
+          className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition ${
+            sort === "score"
+              ? "border-spark bg-spark/10 text-spark"
+              : "border-white/15 text-white/60 hover:border-white/30 hover:text-white"
+          }`}
+        >
+          <Sparkles className="h-3 w-3" />
+          AI score
+        </Link>
       </div>
 
       <Card className="mt-6 !p-0 overflow-hidden">
-        {(apps?.length ?? 0) === 0 ? (
-          <p className="p-6 text-sm text-white/50">No applications.</p>
-        ) : (
-          // CSS grid instead of <table> so each row can be a single <Link>
-          // — that way clicking anywhere in the row navigates, not just
-          // the applicant name.
-          <div className="text-sm">
-            <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,0.5fr)_minmax(0,1fr)_minmax(0,1fr)] gap-3 border-b border-white/10 px-5 py-3 text-xs uppercase tracking-wider text-white/40">
-              <div>Applicant</div>
-              <div>Email</div>
-              <div>Age</div>
-              <div>Status</div>
-              <div>Submitted</div>
-            </div>
-            {apps!.map((a: any) => (
-              <Link
-                key={a.id}
-                href={`/admin/applications/${a.id}`}
-                className="group grid grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,0.5fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 border-b border-white/5 px-5 py-3 last:border-0 hover:bg-white/[0.02]"
-              >
-                <div className="truncate text-white group-hover:text-spark">
-                  {a.full_name || "—"}
-                </div>
-                <div className="truncate text-white/60">
-                  {a.profile?.email ?? "—"}
-                </div>
-                <div className="text-white/60">{a.age ?? "—"}</div>
-                <div>
-                  <StatusBadge status={a.status} />
-                </div>
-                <div className="text-white/50">
-                  <LocalTime value={a.submitted_at} mode="date" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        <ApplicationsBulkList
+          apps={(apps ?? []).map((a: any) => ({
+            id: a.id,
+            full_name: a.full_name,
+            age: a.age,
+            status: a.status,
+            submitted_at: a.submitted_at,
+            ai_score: a.ai_score,
+            ai_reviewed_at: a.ai_reviewed_at,
+            profile: a.profile ?? null,
+          }))}
+        />
       </Card>
     </div>
   );

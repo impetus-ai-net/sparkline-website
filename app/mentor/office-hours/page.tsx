@@ -20,7 +20,7 @@ export default async function MentorOfficeHoursPage() {
     ? await admin
         .from("mentor_bookings")
         .select(
-          "id, slot_id, status, topic, student_id, student:profiles(full_name, email)",
+          "id, slot_id, status, topic, student_id, recap_notes, recap_posted_at, student:profiles(full_name, email)",
         )
         .in("slot_id", slotIds)
     : { data: [] as any[] };

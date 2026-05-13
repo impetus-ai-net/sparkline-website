@@ -123,6 +123,69 @@ export async function bookSlot(input: { slotId: string; topic?: string }) {
   revalidatePath("/dashboard/office-hours");
 }
 
+/**
+ * Mentor posts (or updates) a recap after an office-hours session.
+ * Only the slot's owning mentor can do this — the action verifies
+ * ownership before touching the row. Empty body clears the recap so
+ * the mentor can retract a draft.
+ */
+export async function saveBookingRecap(input: {
+  bookingId: string;
+  body: string;
+}) {
+  const { userId } = await assertSelf();
+  await assertMentorOrAdmin(userId);
+  const admin = createAdminClient();
+
+  const { data: booking } = await admin
+    .from("mentor_bookings")
+    .select("id, student_id, slot:mentor_slots(mentor_id, starts_at)")
+    .eq("id", input.bookingId)
+    .maybeSingle();
+  if (!booking) throw new Error("Booking not found.");
+  const slot = Array.isArray((booking as any).slot)
+    ? (booking as any).slot[0]
+    : (booking as any).slot;
+  if (slot.mentor_id !== userId) throw new Error("Forbidden");
+  // Posting a recap before the session has even started is almost
+  // always a confused click — guard so the mentor doesn't accidentally
+  // overwrite next session's empty placeholder while preparing for it.
+  if (new Date(slot.starts_at).getTime() > Date.now()) {
+    throw new Error("Wait until the session is done before posting a recap.");
+  }
+
+  const trimmed = (input.body ?? "").trim().slice(0, 4000);
+  const isClear = trimmed.length === 0;
+
+  const { error } = await admin
+    .from("mentor_bookings")
+    .update({
+      recap_notes: isClear ? null : trimmed,
+      recap_posted_at: isClear ? null : new Date().toISOString(),
+      // First recap = also flip status to "completed" so we don't
+      // have to introduce a separate "mark complete" affordance.
+      status: isClear ? undefined : "completed",
+    })
+    .eq("id", input.bookingId);
+  if (error) throw new Error(error.message);
+
+  // Best-effort notify so the student sees the recap landed.
+  if (!isClear) {
+    try {
+      await notify({
+        userId: booking.student_id,
+        type: "office_hours_recap",
+        title: "Recap posted from your office hours session",
+        body: trimmed.slice(0, 140),
+        link: "/dashboard/office-hours",
+      });
+    } catch {}
+  }
+
+  revalidatePath("/mentor/office-hours");
+  revalidatePath("/dashboard/office-hours");
+}
+
 export async function cancelBooking(input: { bookingId: string }) {
   const { userId } = await assertSelf();
   const admin = createAdminClient();

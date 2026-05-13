@@ -14,6 +14,7 @@ export type ActiveCohort = {
   capacity: number;
   priceCents: number;
   status: string;
+  applicationsCloseAt: string | null;
 };
 
 export type SiteSettings = {
@@ -45,6 +46,26 @@ export type SiteConfig = {
     priceLabel: string;
     /** Capacity as a string, e.g. "24". */
     capacityLabel: string;
+    /**
+     * Number of enrolled students in the active cohort, or 0 when there
+     * isn't one yet. Resolved at request time so the landing page can
+     * show a live "X of N spots filled" signal without admins touching
+     * anything.
+     */
+    enrolledCount: number;
+    /** Remaining capacity. Floored at 0 even if enrollment overshoots. */
+    spotsLeft: number;
+    /**
+     * "8 of 24 spots filled" / "Cohort full" / "" (when no cohort).
+     * Empty string when the data isn't meaningful to show.
+     */
+    spotsLabel: string;
+    /**
+     * "Applications close in 4 days" / "Apply by Jun 1" / "" depending on
+     * whether the active cohort has an explicit close date and how far
+     * out it is. Empty when there's no signal worth showing.
+     */
+    applicationsCountdownLabel: string;
   };
 };
 
@@ -68,6 +89,7 @@ const FALLBACK_COHORT: ActiveCohort = {
   capacity: 24,
   priceCents: 9700,
   status: "upcoming",
+  applicationsCloseAt: null,
 };
 
 function formatDateRange(startsOn: string | null, endsOn: string | null) {
@@ -86,7 +108,11 @@ function formatDateRange(startsOn: string | null, endsOn: string | null) {
   return `${fmt(startsOn)} → ${fmt(endsOn)}`;
 }
 
-function derive(cohort: ActiveCohort | null): SiteConfig["derived"] {
+function derive(
+  cohort: ActiveCohort | null,
+  enrolledCount: number,
+  applicationsOpen: boolean,
+): SiteConfig["derived"] {
   const c = cohort ?? FALLBACK_COHORT;
   const cohortLabel =
     c.cohortNumber != null ? `Cohort ${c.cohortNumber}` : "";
@@ -95,6 +121,45 @@ function derive(cohort: ActiveCohort | null): SiteConfig["derived"] {
     ? `${cohortLabel} · ${cohortName}`
     : cohortName;
   const dollars = Math.round((c.priceCents ?? 0) / 100);
+
+  const spotsLeft = Math.max(0, (c.capacity ?? 0) - enrolledCount);
+  let spotsLabel = "";
+  if (cohort && c.capacity > 0) {
+    if (spotsLeft === 0) {
+      spotsLabel = "Cohort full";
+    } else if (enrolledCount === 0) {
+      // Pre-launch: don't shame the cohort with "0 of 24 enrolled".
+      // Show capacity instead so the framing reads positively.
+      spotsLabel = `${c.capacity} spots open`;
+    } else {
+      spotsLabel = `${spotsLeft} of ${c.capacity} spots left`;
+    }
+  }
+
+  // Countdown only fires when applications are open AND we have a real
+  // close date AND it's in the future-but-not-too-far. Past that
+  // horizon the label drops to "Apply by <date>" which is calmer.
+  let applicationsCountdownLabel = "";
+  if (applicationsOpen && cohort && c.applicationsCloseAt) {
+    const close = new Date(c.applicationsCloseAt);
+    const ms = close.getTime() - Date.now();
+    const days = Math.ceil(ms / (24 * 60 * 60 * 1000));
+    if (days <= 0) {
+      applicationsCountdownLabel = "Applications closed";
+    } else if (days === 1) {
+      applicationsCountdownLabel = "Applications close in 1 day";
+    } else if (days <= 14) {
+      applicationsCountdownLabel = `Applications close in ${days} days`;
+    } else {
+      const label = close.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      });
+      applicationsCountdownLabel = `Apply by ${label}`;
+    }
+  }
+
   return {
     cohortLabel,
     cohortName,
@@ -103,6 +168,10 @@ function derive(cohort: ActiveCohort | null): SiteConfig["derived"] {
     priceDollars: String(dollars),
     priceLabel: `$${dollars}`,
     capacityLabel: String(c.capacity),
+    enrolledCount,
+    spotsLeft,
+    spotsLabel,
+    applicationsCountdownLabel,
   };
 }
 
@@ -179,6 +248,10 @@ export async function getSiteConfig(): Promise<SiteConfig> {
       capacity: data.capacity,
       priceCents: data.price_cents,
       status: data.status,
+      applicationsCloseAt:
+        typeof data.applications_close_at === "string"
+          ? data.applications_close_at
+          : null,
     };
   }
 
@@ -202,9 +275,21 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     if (data) cohort = toCohort(data);
   }
 
+  // Live enrollment count for the resolved active cohort. Cheap
+  // count(*) query — no per-row read. Returns 0 (rather than erroring)
+  // when there's no cohort or the count query fails for any reason.
+  let enrolledCount = 0;
+  if (cohort?.id) {
+    const { count } = await admin
+      .from("enrollments")
+      .select("id", { count: "exact", head: true })
+      .eq("cohort_id", cohort.id);
+    if (typeof count === "number") enrolledCount = count;
+  }
+
   return {
     cohort,
     settings,
-    derived: derive(cohort),
+    derived: derive(cohort, enrolledCount, settings.applicationsOpen),
   };
 }

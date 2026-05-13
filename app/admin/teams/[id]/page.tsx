@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/card";
 import { TeamForm } from "../team-form";
 import { MembersManager } from "./members-manager";
+import { TearSheetCard } from "./tear-sheet-button";
 
 export const metadata = { title: "Edit team · Admin" };
 
@@ -56,6 +57,11 @@ export default async function AdminTeamDetail({
             pitch_deck_url: team.pitch_deck_url,
             website_url: team.website_url,
             is_public: team.is_public,
+            raised_cents: team.raised_cents ?? null,
+            post_money_cents: team.post_money_cents ?? null,
+            lead_investor: team.lead_investor ?? null,
+            round_kind: team.round_kind ?? null,
+            round_closed_on: team.round_closed_on ?? null,
           }}
           cohorts={cohorts ?? []}
         />
@@ -69,6 +75,14 @@ export default async function AdminTeamDetail({
           teamId={team.id}
           members={(members ?? []) as any}
           students={(students ?? []) as any}
+        />
+      </Card>
+
+      <Card className="mt-6">
+        <TearSheetCard
+          teamId={team.id}
+          existing={team.tear_sheet ?? null}
+          generatedAt={team.tear_sheet_generated_at ?? null}
         />
       </Card>
     </div>

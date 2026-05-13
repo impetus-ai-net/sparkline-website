@@ -5,7 +5,9 @@ import { Card, StatusBadge } from "@/components/ui/card";
 import { LocalTime } from "@/components/ui/local-time";
 import { ReviewActions } from "./review-actions";
 import { AiScreenButton } from "./ai-screen-button";
+import { ReviewThread } from "./review-thread";
 import { getSiteConfig } from "@/lib/site-config";
+import { requireAdmin } from "@/lib/auth";
 
 export const metadata = { title: "Review application · Admin" };
 
@@ -15,7 +17,8 @@ export default async function AdminApplicationDetail({
   params: { id: string };
 }) {
   const admin = createAdminClient();
-  const [{ data: app }, siteConfig] = await Promise.all([
+  const viewer = await requireAdmin();
+  const [{ data: app }, { data: comments }, siteConfig] = await Promise.all([
     admin
       .from("applications")
       .select(
@@ -23,6 +26,13 @@ export default async function AdminApplicationDetail({
       )
       .eq("id", params.id)
       .maybeSingle(),
+    admin
+      .from("application_review_comments")
+      .select(
+        "id, body, created_at, author_id, author:profiles!application_review_comments_author_id_fkey(email, full_name)",
+      )
+      .eq("application_id", params.id)
+      .order("created_at", { ascending: true }),
     getSiteConfig(),
   ]);
 
@@ -146,6 +156,20 @@ export default async function AdminApplicationDetail({
           feeWaived={Boolean((app as any).fee_waived)}
           initialNotes={app.review_notes ?? ""}
           priceLabel={siteConfig.derived.priceLabel}
+        />
+      </Card>
+
+      <Card className="mt-6">
+        <ReviewThread
+          applicationId={app.id}
+          currentUserId={viewer.id}
+          comments={(comments ?? []).map((c: any) => ({
+            id: c.id,
+            body: c.body,
+            created_at: c.created_at,
+            author_id: c.author_id,
+            author: Array.isArray(c.author) ? c.author[0] ?? null : c.author,
+          }))}
         />
       </Card>
     </div>

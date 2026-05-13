@@ -15,6 +15,13 @@ export type CohortInput = {
   capacity: number;
   status: "upcoming" | "active" | "completed" | "cancelled";
   price_cents: number;
+  /**
+   * Optional explicit close-of-applications timestamp. When set, the
+   * landing page hero shows a countdown ("Applications close in N
+   * days"). Leave null to suppress the countdown — the global
+   * `applications_open` setting still works either way.
+   */
+  applications_close_at?: string | null;
 };
 
 const ALLOWED_STATUSES = new Set([
@@ -133,17 +140,22 @@ export async function saveCohort(
       status: input.status,
       price_cents: priceCents,
     };
-    // cohort_number is a newer column (migration 0017). We always pass
-    // it (including null) so editing can clear the value; if the
-    // migration hasn't landed yet we retry without it.
+    // cohort_number is a newer column (migration 0017),
+    // applications_close_at lands in 0029. We always pass them
+    // (including null) so editing can clear values; if a migration
+    // hasn't landed the fallback path drops the optional column.
     const payload: Record<string, any> = {
       ...basePayload,
       cohort_number: cohortNumber,
+      applications_close_at: input.applications_close_at?.trim() || null,
     };
 
     function isUnknownColumnError(err: any) {
       const msg = String(err?.message ?? err);
-      return /column .*cohort_number.* does not exist/i.test(msg);
+      return (
+        /column .*cohort_number.* does not exist/i.test(msg) ||
+        /column .*applications_close_at.* does not exist/i.test(msg)
+      );
     }
 
     let cohortId = input.id ?? null;

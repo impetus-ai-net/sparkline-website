@@ -5,8 +5,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError, Textarea } from "@/components/ui/input";
 import { LocalTime } from "@/components/ui/local-time";
-import { createSlot, deleteSlot, cancelBooking } from "./actions";
-import { Trash2, Video, X } from "lucide-react";
+import {
+  createSlot,
+  deleteSlot,
+  cancelBooking,
+  saveBookingRecap,
+} from "./actions";
+import { Trash2, Video, X, MessageSquare, CheckCircle2 } from "lucide-react";
 import { getActionError } from "@/lib/action-error";
 
 export function SlotsManager({ slots }: { slots: any[] }) {
@@ -129,71 +134,177 @@ export function SlotsManager({ slots }: { slots: any[] }) {
             return (
               <li
                 key={s.id}
-                className="flex items-center justify-between gap-4 px-5 py-4"
+                className="flex flex-col gap-3 px-5 py-4"
               >
-                <div className="min-w-0">
-                  <div className="text-sm font-medium">
-                    <LocalTime value={s.starts_at} /> ·{" "}
-                    <span className="text-white/40">
-                      {Math.round(
-                        (new Date(s.ends_at).getTime() -
-                          new Date(s.starts_at).getTime()) /
-                          60000,
-                      )}
-                      m
-                    </span>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium">
+                      <LocalTime value={s.starts_at} /> ·{" "}
+                      <span className="text-white/40">
+                        {Math.round(
+                          (new Date(s.ends_at).getTime() -
+                            new Date(s.starts_at).getTime()) /
+                            60000,
+                        )}
+                        m
+                      </span>
+                    </div>
+                    {s.zoom_url && (
+                      <a
+                        href={s.zoom_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-0.5 inline-flex items-center gap-1 text-xs text-spark hover:underline"
+                      >
+                        <Video className="h-3 w-3" /> Join
+                      </a>
+                    )}
+                    {s.booking ? (
+                      <div className="mt-1 text-xs text-emerald-300">
+                        Booked by {student?.full_name ?? student?.email}
+                        {s.booking.topic && (
+                          <span className="text-white/55">
+                            {" "}
+                            · "{s.booking.topic.slice(0, 60)}"
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-xs text-white/40">
+                        {isPast ? "Past, unclaimed" : "Open"}
+                      </div>
+                    )}
                   </div>
-                  {s.zoom_url && (
-                    <a
-                      href={s.zoom_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-0.5 inline-flex items-center gap-1 text-xs text-spark hover:underline"
-                    >
-                      <Video className="h-3 w-3" /> Join
-                    </a>
-                  )}
-                  {s.booking ? (
-                    <div className="mt-1 text-xs text-emerald-300">
-                      Booked by {student?.full_name ?? student?.email}
-                      {s.booking.topic && (
-                        <span className="text-white/55">
-                          {" "}
-                          · "{s.booking.topic.slice(0, 60)}"
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="mt-1 text-xs text-white/40">
-                      {isPast ? "Past, unclaimed" : "Open"}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {s.booking && (
+                      <button
+                        onClick={() => cancel(s.booking.id)}
+                        className="p-1.5 text-white/40 hover:text-amber-300"
+                        title="Cancel booking"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                    {!s.booking && (
+                      <button
+                        onClick={() => remove(s.id)}
+                        className="p-1.5 text-white/40 hover:text-red-400"
+                        title="Delete slot"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  {s.booking && (
-                    <button
-                      onClick={() => cancel(s.booking.id)}
-                      className="p-1.5 text-white/40 hover:text-amber-300"
-                      title="Cancel booking"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                  {!s.booking && (
-                    <button
-                      onClick={() => remove(s.id)}
-                      className="p-1.5 text-white/40 hover:text-red-400"
-                      title="Delete slot"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+                {s.booking && isPast && (
+                  <RecapEditor
+                    bookingId={s.booking.id}
+                    initial={s.booking.recap_notes ?? ""}
+                    postedAt={s.booking.recap_posted_at ?? null}
+                  />
+                )}
               </li>
             );
           })}
         </ul>
       </Card>
+    </div>
+  );
+}
+
+function RecapEditor({
+  bookingId,
+  initial,
+  postedAt,
+}: {
+  bookingId: string;
+  initial: string;
+  postedAt: string | null;
+}) {
+  const router = useRouter();
+  const [body, setBody] = useState(initial);
+  const [editing, setEditing] = useState(!initial);
+  const [pending, start] = useTransition();
+  const [err, setErr] = useState<string | undefined>();
+
+  function save() {
+    setErr(undefined);
+    start(async () => {
+      try {
+        await saveBookingRecap({ bookingId, body });
+        setEditing(false);
+        router.refresh();
+      } catch (e: any) {
+        setErr(getActionError(e));
+      }
+    });
+  }
+
+  if (!editing && initial) {
+    return (
+      <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/[0.04] px-3 py-2 text-sm">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-emerald-300">
+            <CheckCircle2 className="h-3 w-3" />
+            Recap posted
+            {postedAt && (
+              <span className="ml-1 normal-case tracking-normal text-emerald-200/60">
+                · <LocalTime value={postedAt} mode="datetime-short" />
+              </span>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-xs text-white/55 hover:text-white"
+          >
+            Edit
+          </button>
+        </div>
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm text-white/85">
+          {initial}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+      <Label htmlFor={`recap-${bookingId}`}>
+        <span className="inline-flex items-center gap-1">
+          <MessageSquare className="h-3 w-3" />
+          Session recap (visible to the student)
+        </span>
+      </Label>
+      <Textarea
+        id={`recap-${bookingId}`}
+        rows={3}
+        maxLength={4000}
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        placeholder="What you covered, action items, links — anything the student should walk away with."
+      />
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <FieldError>{err}</FieldError>
+        <div className="ml-auto flex gap-2">
+          {initial && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setBody(initial);
+                setEditing(false);
+              }}
+              disabled={pending}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button size="sm" onClick={save} disabled={pending}>
+            {pending ? "Saving…" : initial ? "Update recap" : "Post recap"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

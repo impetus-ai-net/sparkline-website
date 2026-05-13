@@ -1,12 +1,13 @@
 "use client";
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { StatusBadge } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { saveCohort, deleteCohort, type CohortInput } from "./actions";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Activity } from "lucide-react";
 import { getActionError } from "@/lib/action-error";
 
 type Cohort = CohortInput & {
@@ -22,6 +23,7 @@ const empty: CohortInput = {
   capacity: 24,
   status: "upcoming",
   price_cents: 9700,
+  applications_close_at: null,
 };
 
 export function CohortsManager({ initialCohorts }: { initialCohorts: Cohort[] }) {
@@ -47,6 +49,7 @@ export function CohortsManager({ initialCohorts }: { initialCohorts: Cohort[] })
           capacity: input.capacity,
           status: input.status,
           price_cents: input.price_cents,
+          applications_close_at: input.applications_close_at ?? null,
         };
         const res = await saveCohort(clean);
         if (!res.ok) {
@@ -133,6 +136,14 @@ export function CohortsManager({ initialCohorts }: { initialCohorts: Cohort[] })
               </td>
               <td className="py-3"><StatusBadge status={c.status} /></td>
               <td className="py-3 text-right">
+                <Link
+                  href={`/admin/cohorts/${c.id}/health`}
+                  className="inline-block p-1.5 text-white/50 hover:text-spark"
+                  aria-label="View health"
+                  title="Cohort health"
+                >
+                  <Activity className="h-4 w-4" />
+                </Link>
                 <button
                   onClick={() => setEditing(c)}
                   className="p-1.5 text-white/50 hover:text-white"
@@ -302,6 +313,34 @@ function CohortForm({
             <option value="cancelled">Cancelled</option>
           </Select>
         </div>
+      </div>
+      <div>
+        <Label htmlFor="apps_close_at">Applications close</Label>
+        <Input
+          id="apps_close_at"
+          type="datetime-local"
+          // datetime-local needs the value without timezone suffix.
+          value={
+            c.applications_close_at
+              ? c.applications_close_at.slice(0, 16)
+              : ""
+          }
+          onChange={(e) =>
+            setC({
+              ...c,
+              applications_close_at: e.target.value
+                ? // Treat the input as UTC so the stored timestamp
+                  // matches what the admin entered without timezone
+                  // surprises across deploys.
+                  new Date(`${e.target.value}:00Z`).toISOString()
+                : null,
+            })
+          }
+        />
+        <p className="mt-1 text-xs text-white/40">
+          Optional. When set, the landing page shows a countdown
+          ("Applications close in N days").
+        </p>
       </div>
       {error && <p className="text-xs text-red-400">{error}</p>}
       <div className="flex gap-2">

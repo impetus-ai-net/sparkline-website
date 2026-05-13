@@ -42,12 +42,14 @@ export function MobileNav({
   aiAccess,
   discordEnabled,
   enrolled = true,
+  referralsEnabled = true,
 }: {
   kind: MobileNavKind;
   role?: Role;
   aiAccess?: boolean;
   discordEnabled?: boolean;
   enrolled?: boolean;
+  referralsEnabled?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -125,7 +127,20 @@ export function MobileNav({
               ) {
                 return false;
               }
+              if (
+                it.href === "/dashboard/referrals" &&
+                referralsEnabled === false
+              ) {
+                return false;
+              }
               if (!enrolled && ENROLLED_ONLY_HREFS.has(it.href)) return false;
+            }
+            if (kind === "admin") {
+              // Admins keep the link visible when referrals are paused so
+              // they can audit historical referral data; the page itself
+              // shows a "paused" banner. Only filter it when explicitly
+              // turned off AND we want a totally clean nav — current
+              // policy is to keep it.
             }
             return true;
           })
@@ -133,7 +148,15 @@ export function MobileNav({
         return { ...g, items };
       })
       .filter((g) => g.items.length > 0);
-  }, [rawGroups, kind, aiAccess, discordEnabled, enrolled, query]);
+  }, [
+    rawGroups,
+    kind,
+    aiAccess,
+    discordEnabled,
+    enrolled,
+    referralsEnabled,
+    query,
+  ]);
 
   const label = LABEL_BY_KIND[kind];
 

@@ -12,15 +12,32 @@ export default function Hero({
   authedHome?: string | null;
 }) {
   const { derived, settings } = config;
-  const acceptingLabel = settings.applicationsOpen
-    ? "Applications open"
-    : "Applications closed";
+  // Live signal beats the static "Applications open" pill when there's
+  // either a countdown to share or the cohort is filling up.
+  const liveSignal = settings.applicationsOpen
+    ? derived.applicationsCountdownLabel ||
+      (derived.spotsLabel && derived.spotsLeft <= 5 && derived.spotsLeft > 0
+        ? derived.spotsLabel
+        : "")
+    : "";
+  const acceptingLabel =
+    liveSignal ||
+    (settings.applicationsOpen
+      ? "Applications open"
+      : "Applications closed");
   const headline = derived.cohortHeadline;
   const isAuthed = !!authedHome;
   const ctaHref = isAuthed ? authedHome! : "/apply";
   const ctaLabel = isAuthed
     ? "Go to dashboard"
     : `Apply · ${derived.priceLabel} if accepted`;
+  // When derived.spotsLabel is non-empty AND we don't already use it as
+  // the live signal, surface it as a sub-line so it shows up without
+  // double-printing.
+  const spotsSubLine =
+    derived.spotsLabel && derived.spotsLabel !== liveSignal
+      ? derived.spotsLabel
+      : "";
 
   // One signature treatment: a single restrained spark glow up top.
   // Removed the grid backdrop, blurred orb, and radial wash.
@@ -67,6 +84,9 @@ export default function Hero({
         {!isAuthed && (
           <p className="mt-3 text-xs text-white/65">
             Free to apply. Pay {derived.priceLabel} only if accepted.
+            {spotsSubLine && (
+              <span className="ml-2 text-spark/90">· {spotsSubLine}</span>
+            )}
           </p>
         )}
 

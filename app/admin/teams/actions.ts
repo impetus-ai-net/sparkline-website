@@ -13,6 +13,8 @@ function slugify(s: string) {
     .slice(0, 60);
 }
 
+export type RoundKind = "pre_seed" | "safe" | "seed" | "angel" | "grant" | "other";
+
 export type TeamInput = {
   id?: string;
   cohort_id: string;
@@ -24,6 +26,14 @@ export type TeamInput = {
   pitch_deck_url: string | null;
   website_url: string | null;
   is_public: boolean;
+  // Cap-table snapshot (optional). When every field is null the
+  // investor view hides the cap-table block entirely so we don't
+  // advertise "raised: —".
+  raised_cents: number | null;
+  post_money_cents: number | null;
+  lead_investor: string | null;
+  round_kind: RoundKind | null;
+  round_closed_on: string | null;
 };
 
 export async function saveTeam(input: TeamInput) {
@@ -44,6 +54,11 @@ export async function saveTeam(input: TeamInput) {
     pitch_deck_url: input.pitch_deck_url?.trim() || null,
     website_url: input.website_url?.trim() || null,
     is_public: input.is_public,
+    raised_cents: input.raised_cents,
+    post_money_cents: input.post_money_cents,
+    lead_investor: input.lead_investor?.trim() || null,
+    round_kind: input.round_kind,
+    round_closed_on: input.round_closed_on || null,
   };
   let id = input.id;
   if (id) {
