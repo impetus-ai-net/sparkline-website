@@ -3,7 +3,14 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertAdmin } from "@/lib/server-guards";
 import { logAudit } from "@/lib/audit";
-import { postChannelMessage, getDiscordSettings } from "@/lib/discord";
+import {
+  postChannelMessage,
+  getDiscordSettings,
+  registerSlashCommands as discordRegisterCommands,
+  syncMemberRoles,
+  refreshDiscordIdentity,
+} from "@/lib/discord";
+import type { Role } from "@/lib/types";
 
 /**
  * Master kill-switch. When false, every Discord side effect short-
@@ -85,6 +92,96 @@ export async function saveDiscordConfig(input: DiscordConfigInput) {
     ),
   });
   revalidatePath("/admin/discord");
+}
+
+/**
+ * Push the SLASH_COMMANDS spec to Discord. PUT semantics — anything not
+ * in the spec gets unregistered. Returns the names that are now live so
+ * the UI can confirm.
+ */
+export async function registerCommands(): Promise<{ names: string[] }> {
+  await assertAdmin();
+  const registered = await discordRegisterCommands();
+  const names = registered.map((c) => c.name);
+  await logAudit({
+    action: "discord.commands_registered",
+    payload: { names },
+  });
+  revalidatePath("/admin/discord");
+  return { names };
+}
+
+/**
+ * Re-apply each linked user's Discord roles based on their current
+ * SparkLine role. Useful after re-mapping role IDs, after a server
+ * restore, or once a year as cohort cleanup.
+ *
+ * Throttled: at most ~5 mutations/second to stay clear of Discord's
+ * per-route rate limit. We don't batch — sequential is simpler and the
+ * link counts here are in the hundreds, not thousands.
+ */
+export async function resyncAllRoles(): Promise<{
+  attempted: number;
+  succeeded: number;
+}> {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const { data: rows, error } = await admin
+    .from("profiles")
+    .select("id, discord_user_id, role")
+    .not("discord_user_id", "is", null);
+  if (error) throw new Error(error.message);
+  let succeeded = 0;
+  for (const row of rows ?? []) {
+    const discordUserId = (row as any).discord_user_id as string;
+    const role = ((row as any).role as Role) ?? "student";
+    try {
+      await syncMemberRoles(discordUserId, role);
+      succeeded += 1;
+    } catch (err) {
+      console.error("[discord] resync failed for", discordUserId, err);
+    }
+    // Small delay to be polite to Discord's per-route rate limiter.
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  await logAudit({
+    action: "discord.bulk_role_resync",
+    payload: { attempted: rows?.length ?? 0, succeeded },
+  });
+  revalidatePath("/admin/discord");
+  return { attempted: rows?.length ?? 0, succeeded };
+}
+
+/**
+ * Refresh stored username/avatar for every linked user. Discord doesn't
+ * push us username changes, so this gives admins a manual lever to keep
+ * the UI honest.
+ */
+export async function refreshLinkedIdentities(): Promise<{
+  attempted: number;
+  succeeded: number;
+}> {
+  await assertAdmin();
+  const admin = createAdminClient();
+  const { data: rows, error } = await admin
+    .from("profiles")
+    .select("id, discord_user_id")
+    .not("discord_user_id", "is", null);
+  if (error) throw new Error(error.message);
+  let succeeded = 0;
+  for (const row of rows ?? []) {
+    const did = (row as any).discord_user_id as string;
+    const pid = (row as any).id as string;
+    const ok = await refreshDiscordIdentity(pid, did);
+    if (ok) succeeded += 1;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  await logAudit({
+    action: "discord.bulk_identity_refresh",
+    payload: { attempted: rows?.length ?? 0, succeeded },
+  });
+  revalidatePath("/admin/discord");
+  return { attempted: rows?.length ?? 0, succeeded };
 }
 
 /**

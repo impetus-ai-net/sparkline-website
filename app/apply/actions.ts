@@ -8,6 +8,12 @@ import { sendEmail } from "@/lib/email/send";
 import { Templates } from "@/lib/email/templates";
 import { notify } from "@/lib/notifications";
 import { checkRateLimit } from "@/lib/rate-limit";
+import {
+  postChannelMessage,
+  applicationEmbed,
+  getDiscordSettings,
+} from "@/lib/discord";
+import { env } from "@/lib/env";
 
 // Optional URL: empty string allowed, otherwise must be a valid URL
 const optionalUrl = z
@@ -339,6 +345,33 @@ async function upsertApplication(
           body: `${profile?.full_name ?? profile?.email ?? "Someone"} just applied.`,
           link: `/admin/applications/${applicationId}`,
         });
+      }
+      // Mirror to the admin Discord feed so staff have one place to watch.
+      try {
+        const settings = await getDiscordSettings();
+        if (settings.adminFeedChannelId) {
+          let cohortName: string | null = null;
+          if (cohortId) {
+            const { data: c } = await admin
+              .from("cohorts")
+              .select("name")
+              .eq("id", cohortId)
+              .maybeSingle();
+            cohortName = c?.name ?? null;
+          }
+          await postChannelMessage(settings.adminFeedChannelId, {
+            embeds: [
+              applicationEmbed({
+                name: profile?.full_name ?? user.email ?? "applicant",
+                email: profile?.email ?? user.email ?? null,
+                cohortName,
+                link: `${env.siteUrl}/admin/applications/${applicationId}`,
+              }),
+            ],
+          });
+        }
+      } catch (err) {
+        console.error("[apply] discord cross-post failed", err);
       }
     } catch (err) {
       console.error("[apply] post-submit notifications failed", err);
