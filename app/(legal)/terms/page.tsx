@@ -49,6 +49,30 @@ export default function TermsPage() {
         and display your content for the purpose of running the program.
       </p>
 
+      <h2>Your ideas, your IP, your company</h2>
+      <p>
+        You own 100% of your idea, your intellectual property, and any
+        company you build during or after the program. SparkLine does
+        <strong> not</strong> take equity, royalties, revenue share, or
+        any ownership interest in your business as a condition of
+        participating. We don't claim your IP, we don't license your work
+        to third parties, and we don't sell information about your idea.
+        Mentors, instructors, and staff are bound by the same rule.
+      </p>
+      <p>
+        The only thing we ask: permission to attribute. We may publicly
+        mention that a project, founder, or company "was built at
+        SparkLine" or "started in a SparkLine cohort" — for example, in
+        case studies, alumni lists, social posts, and our website. This
+        is attribution only and creates no ownership, partnership, or
+        agency relationship between SparkLine and your business. If you'd
+        prefer not to be named publicly, email{" "}
+        <a href="mailto:sparkline.youth@gmail.com">
+          sparkline.youth@gmail.com
+        </a>{" "}
+        and we'll honor that.
+      </p>
+
       <h2>Termination</h2>
       <p>
         You can delete your account at any time from your settings page.

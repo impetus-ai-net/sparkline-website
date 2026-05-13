@@ -4,6 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { env } from "@/lib/env";
+import {
+  getOrCreateStripeCustomer,
+  stripeErrorMessage,
+} from "@/lib/stripe-customer";
 
 /**
  * Creates a Stripe Checkout Session to pay an arbitrary user_charge
@@ -52,64 +56,67 @@ export async function POST(req: Request) {
     );
   }
 
-  // Reuse / create Stripe customer.
   const { data: profile } = await admin
     .from("profiles")
     .select("stripe_customer_id, email, full_name")
     .eq("id", user.id)
     .single();
-  let customerId = profile?.stripe_customer_id ?? null;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: profile?.email ?? user.email ?? undefined,
-      name: profile?.full_name ?? undefined,
-      metadata: { supabase_user_id: user.id },
-    });
-    customerId = customer.id;
-    await admin
-      .from("profiles")
-      .update({ stripe_customer_id: customerId })
-      .eq("id", user.id);
-  }
 
   // Canonical site URL, not the attacker-controllable Origin header.
   const origin = env.siteUrl;
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer: customerId,
-    line_items: [
+
+  try {
+    const customerId = await getOrCreateStripeCustomer(
+      admin,
       {
-        quantity: 1,
-        price_data: {
-          currency: "usd",
-          unit_amount: charge.amount_cents,
-          product_data: {
-            name: `SparkLine — ${charge.kind === "fine" ? "Fine" : "Fee"}`,
-            description: charge.description,
+        id: user.id,
+        email: profile?.email ?? null,
+        full_name: profile?.full_name ?? null,
+        stripe_customer_id: profile?.stripe_customer_id ?? null,
+      },
+      user.email,
+    );
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer: customerId,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "usd",
+            unit_amount: charge.amount_cents,
+            product_data: {
+              name: `SparkLine — ${charge.kind === "fine" ? "Fine" : "Fee"}`,
+              description: charge.description,
+            },
           },
         },
-      },
-    ],
-    metadata: {
-      kind: "user_charge",
-      charge_id: charge.id,
-      user_id: user.id,
-    },
-    payment_intent_data: {
+      ],
       metadata: {
         kind: "user_charge",
         charge_id: charge.id,
         user_id: user.id,
       },
-    },
-    success_url: `${origin}/dashboard/billing?charge_paid=1`,
-    cancel_url: `${origin}/dashboard/billing?charge_canceled=1`,
-  });
+      payment_intent_data: {
+        metadata: {
+          kind: "user_charge",
+          charge_id: charge.id,
+          user_id: user.id,
+        },
+      },
+      success_url: `${origin}/dashboard/billing?charge_paid=1`,
+      cancel_url: `${origin}/dashboard/billing?charge_canceled=1`,
+    });
 
-  await admin
-    .from("user_charges")
-    .update({ stripe_session_id: session.id })
-    .eq("id", charge.id);
+    await admin
+      .from("user_charges")
+      .update({ stripe_session_id: session.id })
+      .eq("id", charge.id);
 
-  return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    console.error("[stripe charge-checkout] failed", err);
+    return NextResponse.json({ error: stripeErrorMessage(err) }, { status: 500 });
+  }
 }

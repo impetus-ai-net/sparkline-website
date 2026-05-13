@@ -38,6 +38,10 @@ export default function FAQ({ config }: { config: SiteConfig }) {
       q: "What do I walk away with?",
       a: "A validated Lean Canvas, a complete business model, a go-to-market plan, and a polished, investor-ready pitch deck — plus the network and credibility to keep going.",
     },
+    {
+      q: "Does SparkLine take equity or own my idea?",
+      a: "No. You own 100% of your idea, your work, and your company — before, during, and after the cohort. SparkLine takes no equity, no IP, and no royalties. The only thing we ask is that you let us say \"this project was built at SparkLine\" when we talk about our alumni. That's it.",
+    },
   ];
 
   const [open, setOpen] = useState<number | null>(0);

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
+import { stripeErrorMessage } from "@/lib/stripe-customer";
 
 /**
  * Redirect signed-in users to the Stripe customer portal so they can
@@ -31,10 +32,30 @@ export async function POST(req: Request) {
   }
 
   const origin = req.headers.get("origin") || env.siteUrl;
-  const session = await stripe.billingPortal.sessions.create({
-    customer: profile.stripe_customer_id,
-    return_url: `${origin}/dashboard/billing`,
-  });
-
-  return NextResponse.json({ url: session.url });
+  try {
+    const session = await stripe.billingPortal.sessions.create({
+      customer: profile.stripe_customer_id,
+      return_url: `${origin}/dashboard/billing`,
+    });
+    return NextResponse.json({ url: session.url });
+  } catch (err: unknown) {
+    // Stale customer ID (e.g. test-mode ID in live mode). Clear it so
+    // the next payment creates a fresh one, and tell the user to retry.
+    const code = (err as { code?: string }).code;
+    if (code === "resource_missing") {
+      await admin
+        .from("profiles")
+        .update({ stripe_customer_id: null })
+        .eq("id", user.id);
+      return NextResponse.json(
+        {
+          error:
+            "Your Stripe customer record was reset. Make a new payment to re-link your account, then the portal will be available again.",
+        },
+        { status: 400 },
+      );
+    }
+    console.error("[stripe portal] failed", err);
+    return NextResponse.json({ error: stripeErrorMessage(err) }, { status: 500 });
+  }
 }
