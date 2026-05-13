@@ -131,6 +131,12 @@ export function SettingsForm({
           checked={values.maintenance_mode}
           onChange={(v) => set("maintenance_mode", v)}
         />
+        <Toggle
+          label="Referrals"
+          description="When off, hides the referral link on the student dashboard and ignores ?ref= codes on signup/apply. Existing application records keep their stored codes."
+          checked={values.referrals_enabled}
+          onChange={(v) => set("referrals_enabled", v)}
+        />
       </Section>
 
       {error && (

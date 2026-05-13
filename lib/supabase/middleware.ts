@@ -27,6 +27,13 @@ function roleHome(role: RoleLike): string {
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Middleware reads per-user state (role, pending fines, etc.) on every
+  // request. Next.js otherwise caches GET fetches inside middleware,
+  // which makes a freshly-changed `profiles.role` look stale until the
+  // user signs back in. Force every Supabase fetch to bypass cache.
+  const noStoreFetch: typeof fetch = (input, init) =>
+    fetch(input, { ...init, cache: "no-store" });
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -45,6 +52,7 @@ export async function updateSession(request: NextRequest) {
           );
         },
       },
+      global: { fetch: noStoreFetch },
     },
   );
 

@@ -7,6 +7,14 @@ type CookiesToSet = {
   options: CookieOptions;
 }[];
 
+// Supabase queries from server components / middleware go through the
+// global fetch, which Next.js silently caches for GETs. That cache makes
+// per-user reads (like `profiles.role`) appear stale after the row has
+// changed in the DB. Force every Supabase fetch to opt out so reads
+// always see the current row.
+const noStoreFetch: typeof fetch = (input, init) =>
+  fetch(input, { ...init, cache: "no-store" });
+
 export function createClient() {
   const cookieStore = cookies();
   return createServerClient(
@@ -28,6 +36,7 @@ export function createClient() {
           }
         },
       },
+      global: { fetch: noStoreFetch },
     },
   );
 }

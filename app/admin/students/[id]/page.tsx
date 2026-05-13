@@ -6,6 +6,7 @@ import { Card, StatusBadge } from "@/components/ui/card";
 import { RoleSelect } from "../role-select";
 import { ManagePanel } from "./manage-panel";
 import { discordAvatarUrl } from "@/lib/discord";
+import { getSiteConfig } from "@/lib/site-config";
 import type { Role } from "@/lib/types";
 
 export const metadata = { title: "Manage user · Admin" };
@@ -24,6 +25,8 @@ export default async function AdminStudentDetail({
 }) {
   const actor = await getProfile();
   const admin = createAdminClient();
+  const siteConfig = await getSiteConfig();
+  const referralsEnabled = siteConfig.settings.referralsEnabled;
 
   const [
     { data: profile },
@@ -88,9 +91,15 @@ export default async function AdminStudentDetail({
           </h1>
           <p className="mt-1 text-sm text-white/55">{profile.email}</p>
           <p className="mt-1 text-xs text-white/40">
-            Joined {new Date(profile.created_at).toLocaleDateString()} ·
-            Referral code{" "}
-            <span className="text-white/70">{profile.referral_code ?? "—"}</span>
+            Joined {new Date(profile.created_at).toLocaleDateString()}
+            {referralsEnabled && (
+              <>
+                {" · "}Referral code{" "}
+                <span className="text-white/70">
+                  {profile.referral_code ?? "—"}
+                </span>
+              </>
+            )}
             {profile.discord_user_id && (
               <>
                 {" "}· Discord{" "}

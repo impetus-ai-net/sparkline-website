@@ -2,13 +2,25 @@ import React from "react";
 import Image from "next/image";
 import type { SiteConfig } from "@/lib/site-config";
 
-export default function Hero({ config }: { config: SiteConfig }) {
+export default function Hero({
+  config,
+  authedHome,
+}: {
+  config: SiteConfig;
+  /** If the visitor is already signed in, route the primary CTA to
+   *  their role home instead of showing the apply pitch. */
+  authedHome?: string | null;
+}) {
   const { derived, settings } = config;
   const acceptingLabel = settings.applicationsOpen
     ? "Applications open"
     : "Applications closed";
   const headline = derived.cohortHeadline;
-  const applyCta = `Apply · ${derived.priceLabel} if accepted`;
+  const isAuthed = !!authedHome;
+  const ctaHref = isAuthed ? authedHome! : "/apply";
+  const ctaLabel = isAuthed
+    ? "Go to dashboard"
+    : `Apply · ${derived.priceLabel} if accepted`;
 
   // One signature treatment: a single restrained spark glow up top.
   // Removed the grid backdrop, blurred orb, and radial wash.
@@ -39,10 +51,10 @@ export default function Hero({ config }: { config: SiteConfig }) {
 
         <div className="mt-9 flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <a
-            href="/apply"
+            href={ctaHref}
             className="press inline-flex items-center justify-center gap-2 rounded-md bg-spark px-5 py-3 text-[15px] font-semibold text-black hover:bg-spark-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
-            {applyCta}
+            {ctaLabel}
             <span aria-hidden>→</span>
           </a>
           <a
@@ -52,9 +64,11 @@ export default function Hero({ config }: { config: SiteConfig }) {
             See how it works
           </a>
         </div>
-        <p className="mt-3 text-xs text-white/55">
-          Free to apply. Pay {derived.priceLabel} only if accepted.
-        </p>
+        {!isAuthed && (
+          <p className="mt-3 text-xs text-white/55">
+            Free to apply. Pay {derived.priceLabel} only if accepted.
+          </p>
+        )}
 
         {/* Proof row — concrete facts in lieu of testimonials we don't have yet. */}
         <dl className="mt-14 grid grid-cols-2 gap-x-8 gap-y-6 border-t border-white/10 pt-8 sm:grid-cols-4">

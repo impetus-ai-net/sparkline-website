@@ -23,6 +23,7 @@ export type SiteSettings = {
   applicationsClosedMessage: string;
   demoDayDate: string | null;
   maintenanceMode: boolean;
+  referralsEnabled: boolean;
 };
 
 export type SiteConfig = {
@@ -55,6 +56,7 @@ const FALLBACK_SETTINGS: SiteSettings = {
     "Applications are currently closed. Check back soon for the next cohort.",
   demoDayDate: null,
   maintenanceMode: false,
+  referralsEnabled: true,
 };
 
 const FALLBACK_COHORT: ActiveCohort = {
@@ -150,6 +152,10 @@ export async function getSiteConfig(): Promise<SiteConfig> {
       typeof raw.maintenance_mode === "boolean"
         ? raw.maintenance_mode
         : FALLBACK_SETTINGS.maintenanceMode,
+    referralsEnabled:
+      typeof raw.referrals_enabled === "boolean"
+        ? raw.referrals_enabled
+        : FALLBACK_SETTINGS.referralsEnabled,
   };
 
   const pinnedId =

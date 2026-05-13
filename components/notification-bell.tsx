@@ -201,7 +201,7 @@ export function NotificationBell({ align = "right" }: { align?: Align } = {}) {
       </button>
       {open && (
         <div
-          className={`absolute z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] ${
+          className={`absolute z-50 mt-2 max-w-[calc(100vw-1.5rem)] w-[22rem] overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >

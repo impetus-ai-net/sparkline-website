@@ -19,6 +19,7 @@ const DEFAULTS: SiteSettingsInput = {
   discord_url: "",
   demo_day_date: null,
   maintenance_mode: false,
+  referrals_enabled: true,
 };
 
 export default async function AdminSettingsPage() {
@@ -66,6 +67,10 @@ export default async function AdminSettingsPage() {
       typeof raw.maintenance_mode === "boolean"
         ? raw.maintenance_mode
         : false,
+    referrals_enabled:
+      typeof raw.referrals_enabled === "boolean"
+        ? raw.referrals_enabled
+        : DEFAULTS.referrals_enabled,
   };
 
   return (

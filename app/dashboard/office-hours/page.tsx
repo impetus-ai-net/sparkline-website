@@ -1,12 +1,24 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireUser } from "@/lib/auth";
+import { requireUser, getProfile } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { SlotsList } from "./slots-list";
+import { getStudentAccess } from "@/lib/access";
+import { LockedFeature } from "@/components/dashboard/locked-feature";
 
 export const metadata = { title: "Office hours · SparkLine" };
 
 export default async function StudentOfficeHoursPage() {
   const user = await requireUser();
+  const profile = await getProfile();
+  const access = await getStudentAccess(profile?.role ?? "student");
+  if (!access.enrolled) {
+    return (
+      <LockedFeature
+        title="Office hours"
+        applicationStatus={access.applicationStatus}
+      />
+    );
+  }
   const admin = createAdminClient();
 
   // Slots in the next 14 days, with their booking (if any), and the mentor's

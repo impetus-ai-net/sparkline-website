@@ -32,17 +32,24 @@ export async function submitCheckin(input: CheckinInput) {
     throw new Error("Each section is capped at 4000 characters.");
   }
 
-  // Cohort comes from the user's current enrollment (if any).
+  // Enrollment is required: check-ins are a cohort-only feature. The
+  // sidebar hides the link pre-enrollment but the route is reachable by
+  // URL, so reject on the server too.
   const { data: enrollment } = await supabase
     .from("enrollments")
     .select("cohort_id")
     .eq("user_id", user.id)
     .maybeSingle();
+  if (!enrollment) {
+    throw new Error(
+      "You need to be enrolled in a cohort to post a weekly check-in.",
+    );
+  }
 
   const week_start = isoWeekStart();
   const payload = {
     user_id: user.id,
-    cohort_id: enrollment?.cohort_id ?? null,
+    cohort_id: enrollment.cohort_id ?? null,
     week_start,
     accomplished: accomplished || null,
     next_up: next_up || null,

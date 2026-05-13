@@ -57,6 +57,10 @@ const SubmitSchema = z.object({
   linkedin_url: optionalUrl,
   resume_url: optionalUrl,
   portfolio_url: optionalUrl,
+  // Optional explicit cohort target — when the apply page exposes a
+  // cohort picker, the chosen id is shipped along with the rest of
+  // the form fields.
+  cohort_id: optionalString(64),
 });
 
 // Draft-time schema — much looser. Drafts can be incomplete; we only
@@ -91,6 +95,7 @@ const DraftSchema = z.object({
   linkedin_url: optionalUrl,
   resume_url: optionalUrl,
   portfolio_url: optionalUrl,
+  cohort_id: optionalString(64),
 });
 
 type ActionResult = {
@@ -175,8 +180,22 @@ async function upsertApplication(
     }
   }
 
-  const cohortId = await getActiveCohortId(supabase);
   const data = parsed.data as Record<string, any>;
+  // Prefer the user's explicit pick. Fall back to the admin-pinned /
+  // next-upcoming active cohort. Validate the pick is an open cohort
+  // so a client can't ride a stale id onto a closed one.
+  let cohortId: string | null = null;
+  const requested = typeof data.cohort_id === "string" ? data.cohort_id : "";
+  if (requested) {
+    const { data: pickedRow } = await supabase
+      .from("cohorts")
+      .select("id")
+      .eq("id", requested)
+      .in("status", ["upcoming", "active"])
+      .maybeSingle();
+    if (pickedRow?.id) cohortId = pickedRow.id;
+  }
+  if (!cohortId) cohortId = await getActiveCohortId(supabase);
 
   const payload = {
     user_id: user.id,
@@ -221,23 +240,38 @@ async function upsertApplication(
 
   let applicationId: string;
 
+  // Lifecycle handling:
+  //   - draft → update in place
+  //   - rejected or withdrawn → INSERT a brand-new application so the
+  //     student can apply to a different cohort without disturbing the
+  //     historical record (admin review pages keep showing both)
+  //   - submitted / accepted / paid / enrolled → block (those need
+  //     admin action, not another self-serve write)
   if (existing) {
-    if (
-      ["submitted", "accepted", "rejected", "paid", "enrolled"].includes(
-        existing.status,
-      )
+    if (existing.status === "draft") {
+      const { error } = await supabase
+        .from("applications")
+        .update(payload)
+        .eq("id", existing.id);
+      if (error) return { ok: false, error: error.message };
+      applicationId = existing.id;
+    } else if (
+      existing.status === "rejected" ||
+      existing.status === "withdrawn"
     ) {
+      const { data: created, error } = await supabase
+        .from("applications")
+        .insert(payload)
+        .select("id")
+        .single();
+      if (error) return { ok: false, error: error.message };
+      applicationId = created!.id;
+    } else {
       return {
         ok: false,
         error: "Your application is already in review or decided.",
       };
     }
-    const { error } = await supabase
-      .from("applications")
-      .update(payload)
-      .eq("id", existing.id);
-    if (error) return { ok: false, error: error.message };
-    applicationId = existing.id;
   } else {
     const { data: created, error } = await supabase
       .from("applications")
@@ -345,6 +379,12 @@ export async function submitApplicationAction(
  * blow away every other field on the row.
  */
 export async function attachReferralCodeAction(code: string) {
+  // Hard gate: when the admin turns referrals off, ignore any attempt
+  // to attach a code so the feature is truly inert.
+  const { getSiteConfig } = await import("@/lib/site-config");
+  const cfg = await getSiteConfig();
+  if (!cfg.settings.referralsEnabled) return { ok: false };
+
   const supabase = createClient();
   const {
     data: { user },

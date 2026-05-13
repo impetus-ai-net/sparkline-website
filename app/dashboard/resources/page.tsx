@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireUser, getProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/card";
 import { FileText, ExternalLink, Download } from "lucide-react";
+import { getStudentAccess } from "@/lib/access";
+import { LockedFeature } from "@/components/dashboard/locked-feature";
 
 export const metadata = { title: "Resources · SparkLine" };
 
@@ -21,6 +23,16 @@ function fmtBytes(n: number | null) {
 
 export default async function DashboardResourcesPage() {
   await requireUser();
+  const profile = await getProfile();
+  const access = await getStudentAccess(profile?.role ?? "student");
+  if (!access.enrolled) {
+    return (
+      <LockedFeature
+        title="Resources"
+        applicationStatus={access.applicationStatus}
+      />
+    );
+  }
   const supabase = createClient();
   const { data: resources } = await supabase
     .from("resources")

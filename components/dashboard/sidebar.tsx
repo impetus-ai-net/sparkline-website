@@ -42,7 +42,7 @@ export function StudentSidebar({
             Spark<span className="text-spark">Line</span>
           </span>
         </Link>
-        <NotificationBell align="right" />
+        <NotificationBell align="left" />
       </div>
       <SidebarNav
         storageKey="student"

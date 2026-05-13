@@ -10,6 +10,7 @@ import FAQ from "@/components/faq";
 import CTA from "@/components/cta";
 import Footer from "@/components/footer";
 import { getSiteConfig } from "@/lib/site-config";
+import { getProfile, roleHome } from "@/lib/auth";
 
 // Scroll-preview is the only piece left that pulls framer-motion's
 // scroll-linked APIs + a wide lucide icon set. It's below the fold, so we
@@ -20,11 +21,15 @@ const ScrollPreview = dynamic(() => import("@/components/scroll-preview"), {
 });
 
 export default async function Home() {
-  const config = await getSiteConfig();
+  const [config, profile] = await Promise.all([
+    getSiteConfig(),
+    getProfile(),
+  ]);
+  const authedHome = profile ? roleHome(profile.role) : null;
   return (
     <main className="relative min-h-screen overflow-hidden bg-black">
-      <Navbar />
-      <Hero config={config} />
+      <Navbar authedHome={authedHome} />
+      <Hero config={config} authedHome={authedHome} />
       <Marquee />
       <Problem />
       <ScrollPreview config={config} />

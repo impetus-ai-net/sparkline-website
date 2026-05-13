@@ -1,15 +1,27 @@
-import { requireUser } from "@/lib/auth";
+import { requireUser, getProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/card";
 import { getMyTeam } from "@/lib/team";
 import { CreateTeamForm } from "./create-team-form";
 import { TeamHome } from "./team-home";
 import { InvitesInbox } from "./invites-inbox";
+import { getStudentAccess } from "@/lib/access";
+import { LockedFeature } from "@/components/dashboard/locked-feature";
 
 export const metadata = { title: "Team · SparkLine" };
 
 export default async function TeamPage() {
   const user = await requireUser();
+  const profile = await getProfile();
+  const access = await getStudentAccess(profile?.role ?? "student");
+  if (!access.enrolled) {
+    return (
+      <LockedFeature
+        title="Team"
+        applicationStatus={access.applicationStatus}
+      />
+    );
+  }
   const admin = createAdminClient();
 
   const team = await getMyTeam(user.id);

@@ -1,7 +1,12 @@
 import React from "react";
 import Image from "next/image";
 
-export default function Navbar() {
+export default function Navbar({
+  authedHome,
+}: {
+  authedHome?: string | null;
+}) {
+  const isAuthed = !!authedHome;
   const links = [
     { href: "#how-it-works", label: "Program" },
     { href: "#curriculum", label: "Curriculum" },
@@ -31,17 +36,19 @@ export default function Navbar() {
           ))}
         </ul>
         <div className="flex items-center gap-4">
+          {!isAuthed && (
+            <a
+              href="/login"
+              className="press hidden sm:inline-block text-[13px] font-medium text-white/65 hover:text-white"
+            >
+              Log in
+            </a>
+          )}
           <a
-            href="/login"
-            className="press hidden sm:inline-block text-[13px] font-medium text-white/65 hover:text-white"
-          >
-            Log in
-          </a>
-          <a
-            href="/apply"
+            href={isAuthed ? authedHome! : "/apply"}
             className="press inline-flex items-center gap-1.5 rounded-md bg-spark px-3.5 py-1.5 text-[13px] font-semibold text-black hover:bg-spark-200"
           >
-            Apply
+            {isAuthed ? "Dashboard" : "Apply"}
             <span aria-hidden>→</span>
           </a>
         </div>

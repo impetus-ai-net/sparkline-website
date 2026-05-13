@@ -1,12 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, getProfile } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { FilesManager } from "./files-manager";
+import { getStudentAccess } from "@/lib/access";
+import { LockedFeature } from "@/components/dashboard/locked-feature";
 
 export const metadata = { title: "Files · SparkLine" };
 
 export default async function StudentFilesPage() {
   const user = await requireUser();
+  const profile = await getProfile();
+  const access = await getStudentAccess(profile?.role ?? "student");
+  if (!access.enrolled) {
+    return (
+      <LockedFeature
+        title="Files"
+        applicationStatus={access.applicationStatus}
+      />
+    );
+  }
   const supabase = createClient();
 
   const { data: files } = await supabase

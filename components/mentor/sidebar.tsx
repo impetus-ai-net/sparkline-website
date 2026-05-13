@@ -17,7 +17,7 @@ export function MentorSidebar({ role }: { role: Role }) {
             Spark<span className="text-spark">Line</span>
           </span>
         </Link>
-        <NotificationBell align="right" />
+        <NotificationBell align="left" />
       </div>
       <p className="mb-4 px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-spark">
         Mentor

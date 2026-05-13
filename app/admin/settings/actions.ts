@@ -21,6 +21,7 @@ export type SiteSettingsInput = {
   discord_url: string;
   demo_day_date: string | null;
   maintenance_mode: boolean;
+  referrals_enabled: boolean;
 };
 
 const KEYS: (keyof SiteSettingsInput)[] = [
@@ -32,6 +33,7 @@ const KEYS: (keyof SiteSettingsInput)[] = [
   "discord_url",
   "demo_day_date",
   "maintenance_mode",
+  "referrals_enabled",
 ];
 
 export async function saveSiteSettings(input: SiteSettingsInput) {

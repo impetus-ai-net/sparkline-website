@@ -77,9 +77,10 @@ function validateStep(
   return errs;
 }
 
-function buildFormData(form: FormState) {
+function buildFormData(form: FormState, cohortId?: string | null) {
   const fd = new FormData();
   for (const [k, v] of Object.entries(form)) fd.append(k, v);
+  if (cohortId) fd.append("cohort_id", cohortId);
   return fd;
 }
 
@@ -93,10 +94,15 @@ export function ApplicationForm({
   defaults,
   email,
   priceLabel = "$97",
+  cohortId = null,
 }: {
   defaults: Application | null;
   email: string;
   priceLabel?: string;
+  /** Cohort the applicant is targeting. Selected on the /apply page;
+   *  sent up with every draft save + final submit so the server-side
+   *  action can attach the row to that cohort. */
+  cohortId?: string | null;
 }) {
   const [step, setStep] = useState(1);
   const [submitPending, startSubmit] = useTransition();
@@ -159,7 +165,7 @@ export function ApplicationForm({
       if (!dirtyRef.current) return;
       dirtyRef.current = false;
       setSave({ kind: "saving" });
-      const result = await saveDraftAction(null, buildFormData(formRef.current));
+      const result = await saveDraftAction(null, buildFormData(formRef.current, cohortId));
       if (result.ok) {
         setSave({ kind: "saved", at: new Date() });
       } else {
@@ -196,7 +202,7 @@ export function ApplicationForm({
       if (!dirtyRef.current) return;
       dirtyRef.current = false;
       // Fire-and-forget; we don't await on unload.
-      saveDraftAction(null, buildFormData(formRef.current));
+      saveDraftAction(null, buildFormData(formRef.current, cohortId));
     };
     const onVis = () => document.visibilityState === "hidden" && flush();
     window.addEventListener("beforeunload", flush);
@@ -236,7 +242,10 @@ export function ApplicationForm({
     }
     setSubmitError(undefined);
     startSubmit(async () => {
-      const result = await submitApplicationAction(null, buildFormData(form));
+      const result = await submitApplicationAction(
+        null,
+        buildFormData(form, cohortId),
+      );
       if (!result.ok) {
         setSubmitError(result.error);
         setFieldErrors(result.fieldErrors ?? {});

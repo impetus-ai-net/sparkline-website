@@ -1,13 +1,25 @@
-import { requireUser } from "@/lib/auth";
+import { requireUser, getProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { CheckinForm } from "./checkin-form";
 import { isoWeekStart, formatWeekRange } from "@/lib/week";
+import { getStudentAccess } from "@/lib/access";
+import { LockedFeature } from "@/components/dashboard/locked-feature";
 
 export const metadata = { title: "Weekly check-in · SparkLine" };
 
 export default async function CheckinPage() {
   const user = await requireUser();
+  const profile = await getProfile();
+  const access = await getStudentAccess(profile?.role ?? "student");
+  if (!access.enrolled) {
+    return (
+      <LockedFeature
+        title="Weekly check-in"
+        applicationStatus={access.applicationStatus}
+      />
+    );
+  }
   const supabase = createClient();
   const weekStart = isoWeekStart();
 

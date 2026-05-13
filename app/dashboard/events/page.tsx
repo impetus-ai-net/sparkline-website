@@ -1,12 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, getProfile } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { CalendarDays, MapPin, Video } from "lucide-react";
+import { getStudentAccess } from "@/lib/access";
+import { LockedFeature } from "@/components/dashboard/locked-feature";
 
 export const metadata = { title: "Events · SparkLine" };
 
 export default async function StudentEventsPage() {
   await requireUser();
+  const profile = await getProfile();
+  const access = await getStudentAccess(profile?.role ?? "student");
+  if (!access.enrolled) {
+    return (
+      <LockedFeature
+        title="Events"
+        applicationStatus={access.applicationStatus}
+      />
+    );
+  }
   const supabase = createClient();
 
   const now = new Date().toISOString();

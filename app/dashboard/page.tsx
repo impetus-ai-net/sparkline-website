@@ -188,7 +188,7 @@ export default async function DashboardHome() {
         </aside>
       </section>
 
-      {profile?.referral_code && (
+      {siteConfig.settings.referralsEnabled && profile?.referral_code && (
         <div className="mt-12">
           <ReferralCard
             code={profile.referral_code}
@@ -256,8 +256,8 @@ function appStatus(s?: string | null): StatusBucket {
       return {
         label: "Application · Closed",
         lede: () =>
-          "You weren't selected for this cohort. You're welcome to apply for the next one.",
-        cta: null,
+          "You weren't selected for this cohort. You can apply again to a different one when it opens.",
+        cta: { href: "/apply", label: () => "Apply to another cohort" },
       };
     case "paid":
     case "enrolled":
