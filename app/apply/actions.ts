@@ -24,44 +24,62 @@ const optionalUrl = z
 const optionalString = (max = 200) =>
   z.string().trim().max(max).optional().or(z.literal(""));
 
-// Submit-time schema — strict.
-const SubmitSchema = z.object({
-  full_name: z.string().trim().min(1, "Required").max(120),
-  age: z.coerce.number().int().min(10).max(25),
-  grade: optionalString(40),
-  school: optionalString(160),
-  city: optionalString(120),
-  country: optionalString(120),
-  parent_email: z
-    .string()
-    .trim()
-    .email("Must be a valid email")
-    .optional()
-    .or(z.literal("")),
-  why_join: z
-    .string()
-    .trim()
-    .min(40, "Tell us at least a couple sentences")
-    .max(2000),
-  startup_idea: optionalString(2000),
-  experience: optionalString(2000),
-  hours_per_week: z.coerce
-    .number()
-    .int()
-    .min(0)
-    .max(168)
-    .optional()
-    .or(z.literal("")),
-  referral_source: optionalString(200),
-  referral_code: optionalString(32),
-  linkedin_url: optionalUrl,
-  resume_url: optionalUrl,
-  portfolio_url: optionalUrl,
-  // Optional explicit cohort target — when the apply page exposes a
-  // cohort picker, the chosen id is shipped along with the rest of
-  // the form fields.
-  cohort_id: optionalString(64),
-});
+// Submit-time schema — strict. Mirrors the client validation in
+// application-form.tsx so error messages match on both sides.
+const SubmitSchema = z
+  .object({
+    full_name: z.string().trim().min(1, "Required").max(120),
+    age: z.coerce.number().int().min(10).max(25),
+    grade: optionalString(40),
+    school: optionalString(160),
+    city: optionalString(120),
+    country: optionalString(120),
+    parent_email: z
+      .string()
+      .trim()
+      .max(160)
+      .refine(
+        (v) => v === "" || /^\S+@\S+\.\S+$/.test(v),
+        "Must be a valid email",
+      )
+      .optional()
+      .or(z.literal("")),
+    why_join: z
+      .string()
+      .trim()
+      .min(40, "Tell us at least a couple sentences")
+      .max(2000),
+    startup_idea: optionalString(2000),
+    experience: optionalString(2000),
+    hours_per_week: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(168)
+      .optional()
+      .or(z.literal("")),
+    referral_source: optionalString(200),
+    referral_code: optionalString(32),
+    linkedin_url: optionalUrl,
+    resume_url: optionalUrl,
+    portfolio_url: optionalUrl,
+    // Optional explicit cohort target — when the apply page exposes a
+    // cohort picker, the chosen id is shipped along with the rest of
+    // the form fields.
+    cohort_id: optionalString(64),
+  })
+  // Parent/guardian email is required when the applicant is under 18.
+  // Our Terms of Service claim parental consent for minors; enforcing
+  // it at the schema closes the gap between policy and product.
+  .superRefine((data, ctx) => {
+    if (data.age < 18 && !data.parent_email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["parent_email"],
+        message: "Required if you're under 18",
+      });
+    }
+  });
 
 // Draft-time schema — much looser. Drafts can be incomplete; we only
 // reject pathological values (too long, malformed URLs).

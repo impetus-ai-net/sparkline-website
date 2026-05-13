@@ -3,6 +3,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input, Label, FieldError } from "@/components/ui/input";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 export function LoginForm({
   next,
@@ -23,7 +24,7 @@ export function LoginForm({
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.message);
+      setError(friendlyAuthError(error));
       setLoading(false);
       return;
     }
@@ -42,30 +43,43 @@ export function LoginForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
+    <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email" required>
+          Email
+        </Label>
         <Input
           id="email"
           type="email"
+          inputMode="email"
           autoComplete="email"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           required
+          aria-required="true"
+          error={error ? true : undefined}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
       </div>
       <div>
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password" required>
+          Password
+        </Label>
         <Input
           id="password"
           type="password"
           autoComplete="current-password"
           required
+          aria-required="true"
+          error={error ? true : undefined}
+          aria-describedby={error ? "login-error" : undefined}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
       </div>
-      <FieldError>{error}</FieldError>
+      <FieldError id="login-error">{error}</FieldError>
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Logging in…" : "Log in"}
       </Button>
