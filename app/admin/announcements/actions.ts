@@ -152,3 +152,22 @@ function escape(s: string) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 }
+
+export async function deleteAnnouncement(id: string) {
+  await assertAdmin();
+  const admin = createAdminClient();
+  // Clear notifications that linked to this announcement so students
+  // don't see a deep-link to a 404.
+  await admin
+    .from("notifications")
+    .delete()
+    .eq("type", "announcement")
+    .like("link", `%a-${id}%`);
+  const { error } = await admin.from("announcements").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  await logAudit({
+    action: "announcement.deleted",
+    targetType: "announcement",
+    targetId: id,
+  });
+}

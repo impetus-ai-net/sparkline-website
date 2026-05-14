@@ -254,6 +254,46 @@ export async function cancelCharge(chargeId: string) {
   revalidatePath("/admin/charges");
 }
 
+export type BulkChargeAction = "waive" | "cancel";
+
+export async function bulkChargeAction(input: {
+  chargeIds: string[];
+  action: BulkChargeAction;
+  reason?: string;
+}): Promise<{ succeeded: number; failed: number; skipped: number }> {
+  await assertAdmin();
+  if (input.chargeIds.length === 0) {
+    return { succeeded: 0, failed: 0, skipped: 0 };
+  }
+  if (input.chargeIds.length > 200) {
+    throw new Error("Cap bulk charge actions at 200 rows per run.");
+  }
+  let succeeded = 0;
+  let failed = 0;
+  let skipped = 0;
+  for (const id of input.chargeIds) {
+    try {
+      if (input.action === "waive") {
+        await waiveCharge(id, input.reason ?? "");
+      } else {
+        await cancelCharge(id);
+      }
+      succeeded++;
+    } catch (err: any) {
+      if (
+        typeof err?.message === "string" &&
+        /already|only pending|not found/i.test(err.message)
+      ) {
+        skipped++;
+      } else {
+        failed++;
+      }
+    }
+  }
+  revalidatePath("/admin/charges");
+  return { succeeded, failed, skipped };
+}
+
 function escape(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }

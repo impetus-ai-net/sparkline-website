@@ -17,7 +17,7 @@ const VIEW_AS_LINKS = [
 
 export function AdminSidebar() {
   return (
-    <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-white/10 bg-zinc-950/40 px-4 py-6">
+    <aside className="hidden md:flex md:sticky md:top-0 md:h-screen w-60 shrink-0 flex-col border-r border-white/10 bg-zinc-950/40 px-4 py-6 overflow-hidden">
       <div className="mb-2 flex items-center justify-between px-2">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/logo.svg" alt="" width={24} height={24} />

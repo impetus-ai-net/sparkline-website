@@ -104,6 +104,28 @@ a,
   color: #000;
 }
 
+/* Slim, unobtrusive scrollbar for the in-app sidebars + similar inner
+ * scroll containers. Falls back gracefully on Firefox (scrollbar-width)
+ * and Safari/Chrome (-webkit-scrollbar). */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
 /* Legal-page typography. We deliberately don't ship the Tailwind
  * typography plugin (extra ~30kb of CSS the marketing site doesn't
  * need); this small ruleset gives terms / privacy / refund pages a

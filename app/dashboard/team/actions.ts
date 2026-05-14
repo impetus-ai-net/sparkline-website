@@ -39,6 +39,31 @@ async function assertTeamMember(userId: string, teamId: string) {
   return data;
 }
 
+async function getTeamCohortId(teamId: string): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("teams")
+    .select("cohort_id")
+    .eq("id", teamId)
+    .maybeSingle();
+  return data?.cohort_id ?? null;
+}
+
+async function isEnrolledInCohort(
+  userId: string,
+  cohortId: string,
+): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("enrollments")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("cohort_id", cohortId)
+    .limit(1)
+    .maybeSingle();
+  return !!data;
+}
+
 // ---------------------------------------------------------------------------
 // Team lifecycle
 // ---------------------------------------------------------------------------
@@ -370,6 +395,12 @@ export async function searchStudentsForInvite(input: {
   if (q.length < 2) return [];
   const admin = createAdminClient();
 
+  // Restrict the search to students enrolled in the same cohort as the
+  // team — inviting unenrolled students used to send them a notification
+  // they couldn't act on.
+  const cohortId = await getTeamCohortId(input.teamId);
+  if (!cohortId) return [];
+
   // Search by email OR full_name, students only, excluding anyone already
   // on a team.
   const { data } = await admin
@@ -377,10 +408,16 @@ export async function searchStudentsForInvite(input: {
     .select("id, full_name, email, role")
     .or(`email.ilike.%${q}%,full_name.ilike.%${q}%`)
     .eq("role", "student")
-    .limit(8);
+    .limit(40);
 
   const ids = (data ?? []).map((p) => p.id);
   if (ids.length === 0) return [];
+  const { data: enrolled } = await admin
+    .from("enrollments")
+    .select("user_id")
+    .eq("cohort_id", cohortId)
+    .in("user_id", ids);
+  const enrolledIds = new Set((enrolled ?? []).map((r) => r.user_id));
   const { data: onTeam } = await admin
     .from("team_members")
     .select("user_id")
@@ -398,8 +435,12 @@ export async function searchStudentsForInvite(input: {
   return (data ?? [])
     .filter(
       (p) =>
-        p.id !== userId && !taken.has(p.id) && !alreadyInvited.has(p.id),
+        p.id !== userId &&
+        enrolledIds.has(p.id) &&
+        !taken.has(p.id) &&
+        !alreadyInvited.has(p.id),
     )
+    .slice(0, 8)
     .map((p) => ({ id: p.id, full_name: p.full_name, email: p.email }));
 }
 
@@ -428,6 +469,13 @@ export async function inviteStudent(input: {
     .maybeSingle();
   if (!invitee || invitee.role !== "student") {
     throw new Error("You can only invite students.");
+  }
+
+  // Invitee must be enrolled in the team's cohort. Without this the
+  // student gets a notification they can't meaningfully accept.
+  const cohortId = await getTeamCohortId(input.teamId);
+  if (!cohortId || !(await isEnrolledInCohort(input.inviteeId, cohortId))) {
+    throw new Error("That student isn't enrolled in this cohort.");
   }
 
   // Block if invitee already on another team.
@@ -542,6 +590,12 @@ export async function respondToInvite(input: {
       .eq("user_id", userId)
       .maybeSingle();
     if (existing) throw new Error("You're already on a team.");
+    // Block accepting if the invitee is no longer (or never was)
+    // enrolled in the team's cohort.
+    const cohortId = await getTeamCohortId(invite.team_id);
+    if (!cohortId || !(await isEnrolledInCohort(userId, cohortId))) {
+      throw new Error("You need to be enrolled in this cohort to join the team.");
+    }
     const { count } = await admin
       .from("team_members")
       .select("id", { count: "exact", head: true })

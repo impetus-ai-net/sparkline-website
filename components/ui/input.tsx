@@ -20,6 +20,14 @@ function describedBy(error: CommonProps["error"], id: string | undefined, extra?
   return parts.length ? parts.join(" ") : undefined;
 }
 
+// Solid red border + soft red ring + faint red tint on the background.
+// Without all three, the invalid state was easy to miss against a dark
+// black/40 surface — "Please fix the highlighted fields" had nothing
+// visible to point at.
+const ERROR_CLASSES =
+  "border-red-400 ring-1 ring-red-400/40 bg-red-400/[0.06]";
+const NEUTRAL_BORDER = "border-white/10";
+
 // `text-base md:text-sm` gives mobile users 16px (which iOS Safari needs
 // to NOT auto-zoom when focusing a field) and keeps the denser 14px on
 // medium-and-up where touch isn't the primary input mode.
@@ -30,14 +38,15 @@ export const Input = React.forwardRef<
   { className = "", error, id, "aria-describedby": ariaDescribedBy, ...props },
   ref,
 ) {
-  const errorBorder = error ? "border-red-400/60" : "border-white/10";
+  const state = error ? ERROR_CLASSES : `${NEUTRAL_BORDER} bg-black/40`;
   return (
     <input
       ref={ref}
       id={id}
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy(error, id, ariaDescribedBy)}
-      className={`h-10 w-full rounded-lg border ${errorBorder} bg-black/40 px-3 text-base text-white placeholder:text-white/30 focus:border-spark/60 focus:outline-none focus:ring-2 focus:ring-spark/30 md:text-sm ${className}`}
+      data-invalid={error ? true : undefined}
+      className={`h-10 w-full rounded-lg border ${state} px-3 text-base text-white placeholder:text-white/30 focus:border-spark/60 focus:outline-none focus:ring-2 focus:ring-spark/30 md:text-sm ${className}`}
       {...props}
     />
   );
@@ -50,14 +59,15 @@ export const Textarea = React.forwardRef<
   { className = "", error, id, "aria-describedby": ariaDescribedBy, ...props },
   ref,
 ) {
-  const errorBorder = error ? "border-red-400/60" : "border-white/10";
+  const state = error ? ERROR_CLASSES : `${NEUTRAL_BORDER} bg-black/40`;
   return (
     <textarea
       ref={ref}
       id={id}
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy(error, id, ariaDescribedBy)}
-      className={`min-h-24 w-full rounded-lg border ${errorBorder} bg-black/40 px-3 py-2 text-base text-white placeholder:text-white/30 focus:border-spark/60 focus:outline-none focus:ring-2 focus:ring-spark/30 md:text-sm ${className}`}
+      data-invalid={error ? true : undefined}
+      className={`min-h-24 w-full rounded-lg border ${state} px-3 py-2 text-base text-white placeholder:text-white/30 focus:border-spark/60 focus:outline-none focus:ring-2 focus:ring-spark/30 md:text-sm ${className}`}
       {...props}
     />
   );
@@ -70,14 +80,15 @@ export const Select = React.forwardRef<
   { className = "", children, error, id, "aria-describedby": ariaDescribedBy, ...props },
   ref,
 ) {
-  const errorBorder = error ? "border-red-400/60" : "border-white/10";
+  const state = error ? ERROR_CLASSES : `${NEUTRAL_BORDER} bg-black/40`;
   return (
     <select
       ref={ref}
       id={id}
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy(error, id, ariaDescribedBy)}
-      className={`h-10 w-full rounded-lg border ${errorBorder} bg-black/40 px-3 text-base text-white focus:border-spark/60 focus:outline-none focus:ring-2 focus:ring-spark/30 md:text-sm ${className}`}
+      data-invalid={error ? true : undefined}
+      className={`h-10 w-full rounded-lg border ${state} px-3 text-base text-white focus:border-spark/60 focus:outline-none focus:ring-2 focus:ring-spark/30 md:text-sm ${className}`}
       {...props}
     >
       {children}

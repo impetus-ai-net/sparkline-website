@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { Card, StatusBadge } from "@/components/ui/card";
-import { LocalTime } from "@/components/ui/local-time";
+import { Card } from "@/components/ui/card";
 import { ChargeManager } from "./charge-manager";
+import { ChargesBulkList } from "./bulk-list";
 
 export const metadata = { title: "Fees & fines · Admin" };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const STATUSES = [
   "all",
@@ -15,20 +17,15 @@ const STATUSES = [
   "refunded",
 ] as const;
 
-function fmt(cents: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(cents / 100);
-}
-
 export default async function AdminChargesPage({
   searchParams,
 }: {
   searchParams: { status?: string; user?: string };
 }) {
   const admin = createAdminClient();
-  const status = searchParams.status ?? "pending";
+  // Empty string from `?status=` collapses to the "pending" landing
+  // view; the "all" pill explicitly opts out of that with `?status=all`.
+  const status = (searchParams.status ?? "pending") || "pending";
   const userId = searchParams.user ?? null;
 
   let q = admin
@@ -76,9 +73,12 @@ export default async function AdminChargesPage({
         {STATUSES.map((s) => {
           const active = status === s;
           const params = new URLSearchParams();
-          if (s !== "all") params.set("status", s);
+          // Always include the status param so clicking "all" overrides
+          // the default "pending" landing — otherwise the pill would be
+          // a no-op for anyone arriving with the default view.
+          params.set("status", s);
           if (userId) params.set("user", userId);
-          const href = `/admin/charges${params.toString() ? `?${params}` : ""}`;
+          const href = `/admin/charges?${params.toString()}`;
           return (
             <Link
               key={s}
@@ -96,72 +96,23 @@ export default async function AdminChargesPage({
       </div>
 
       <Card className="mt-4 !p-0 overflow-hidden">
-        {(charges?.length ?? 0) === 0 ? (
-          <p className="p-6 text-sm text-white/55">No charges match.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-white/40">
-                <th className="px-5 py-3">Issued</th>
-                <th className="px-5 py-3">Student</th>
-                <th className="px-5 py-3">Type</th>
-                <th className="px-5 py-3">Amount</th>
-                <th className="px-5 py-3">Description</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {(charges ?? []).map((c: any) => {
-                const p = Array.isArray(c.profile) ? c.profile[0] : c.profile;
-                return (
-                  <tr
-                    key={c.id}
-                    className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]"
-                  >
-                    <td className="px-5 py-3 text-white/60">
-                      <LocalTime value={c.created_at} />
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="text-white">
-                        {p?.full_name ?? "—"}
-                      </div>
-                      <div className="text-xs text-white/40">{p?.email}</div>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                          c.kind === "fine"
-                            ? "bg-red-400/10 text-red-300"
-                            : "bg-amber-300/10 text-amber-200"
-                        }`}
-                      >
-                        {c.kind}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-white/80">
-                      {fmt(c.amount_cents)}
-                    </td>
-                    <td className="px-5 py-3 text-white/60 max-w-xs truncate">
-                      {c.description}
-                    </td>
-                    <td className="px-5 py-3">
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      {(c.status === "pending" || c.status === "paid") && (
-                        <ChargeRowActions chargeId={c.id} status={c.status} />
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+        <ChargesBulkList
+          charges={(charges ?? []).map((c: any) => {
+            const p = Array.isArray(c.profile) ? c.profile[0] : c.profile;
+            return {
+              id: c.id,
+              created_at: c.created_at,
+              kind: c.kind,
+              amount_cents: c.amount_cents,
+              description: c.description,
+              status: c.status,
+              profile: p
+                ? { email: p.email ?? null, full_name: p.full_name ?? null }
+                : null,
+            };
+          })}
+        />
       </Card>
     </div>
   );
 }
-
-import { ChargeRowActions } from "./row-actions";

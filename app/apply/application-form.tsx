@@ -184,21 +184,45 @@ export function ApplicationForm({
     setFieldErrors((e) => ({ ...e, [k]: "" }));
   }
 
-  // Autosave: debounce 1.5s after the last keystroke.
+  // Autosave: debounce 1.5s after the last keystroke. The initial mount
+  // is intentionally skipped — without that guard, just loading the
+  // form re-saved the existing draft once, burning a DB write + audit
+  // log entry for every visit.
   const dirtyRef = useRef(false);
+  const firstAutosaveRef = useRef(true);
   useEffect(() => {
+    if (firstAutosaveRef.current) {
+      firstAutosaveRef.current = false;
+      return;
+    }
     dirtyRef.current = true;
     const timer = setTimeout(async () => {
       if (!dirtyRef.current) return;
       dirtyRef.current = false;
       setSave({ kind: "saving" });
-      const result = await saveDraftAction(null, buildFormData(formRef.current, cohortId));
-      if (result.ok) {
-        setSave({ kind: "saved", at: new Date() });
-      } else {
+      try {
+        const result = await saveDraftAction(
+          null,
+          buildFormData(formRef.current, cohortId),
+        );
+        if (result.ok) {
+          setSave({ kind: "saved", at: new Date() });
+        } else {
+          // Reflect the failure so the user knows the keystrokes
+          // weren't persisted. Also keep dirty=true so the next save
+          // tick will retry rather than silently dropping the change.
+          dirtyRef.current = true;
+          setSave({
+            kind: "error",
+            message: result.error ?? "Couldn't save draft",
+          });
+        }
+      } catch (err) {
+        dirtyRef.current = true;
         setSave({
           kind: "error",
-          message: result.error ?? "Couldn't save draft",
+          message:
+            err instanceof Error ? err.message : "Couldn't save draft",
         });
       }
     }, 1500);
@@ -241,10 +265,32 @@ export function ApplicationForm({
     };
   }, []);
 
+  // Scroll-focus the first invalid field on the next paint. Without
+  // this, the error-state border could end up off-screen and the
+  // "highlighted fields" message felt like a lie.
+  function focusFirstError(errs: Record<string, string>) {
+    if (typeof window === "undefined") return;
+    const firstKey = Object.keys(errs)[0];
+    if (!firstKey) return;
+    requestAnimationFrame(() => {
+      const el = document.getElementById(firstKey) as
+        | HTMLElement
+        | null;
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (typeof (el as any).focus === "function") {
+        try {
+          (el as HTMLInputElement).focus({ preventScroll: true });
+        } catch {}
+      }
+    });
+  }
+
   function goNext() {
     const errs = validateStep(step, form);
     if (Object.keys(errs).length > 0) {
       setFieldErrors((prev) => ({ ...prev, ...errs }));
+      focusFirstError(errs);
       return;
     }
     setStep(step + 1);
@@ -259,13 +305,17 @@ export function ApplicationForm({
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       // Jump to the first step with an error.
+      let firstErrorStep = step;
       for (const s of [1, 2, 3] as const) {
         if (Object.keys(validateStep(s, form)).length > 0) {
+          firstErrorStep = s;
           setStep(s);
           break;
         }
       }
       setSubmitError("Please fix the highlighted fields.");
+      // Defer the scroll/focus until the step has actually rendered.
+      setTimeout(() => focusFirstError(validateStep(firstErrorStep, form)), 80);
       return;
     }
     setSubmitError(undefined);
@@ -277,6 +327,7 @@ export function ApplicationForm({
       if (!result.ok) {
         setSubmitError(result.error);
         setFieldErrors(result.fieldErrors ?? {});
+        if (result.fieldErrors) focusFirstError(result.fieldErrors);
       }
     });
   }
@@ -600,10 +651,17 @@ export function ApplicationForm({
               list anyone — just the count, including yourself.
             </p>
             <div
+              id="team_size"
               role="radiogroup"
               aria-label="Founding team size"
               aria-required="true"
-              className="flex flex-wrap gap-2"
+              aria-invalid={fieldErrors.team_size ? true : undefined}
+              tabIndex={-1}
+              className={`flex flex-wrap gap-2 rounded-lg ${
+                fieldErrors.team_size
+                  ? "ring-1 ring-red-400/40 ring-offset-2 ring-offset-black/0 p-2 -m-2"
+                  : ""
+              }`}
             >
               {TEAM_SIZE_OPTIONS.map((opt) => {
                 const selected = form.team_size === String(opt.value);

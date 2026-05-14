@@ -1,15 +1,32 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/card";
+import { LocalTime } from "@/components/ui/local-time";
 import { AnnouncementForm } from "./announcement-form";
+import { DeleteAnnouncementButton } from "./delete-button";
 
 export const metadata = { title: "Announcements · Admin" };
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AdminAnnouncementsPage() {
   const admin = createAdminClient();
-  const { data: cohorts } = await admin
-    .from("cohorts")
-    .select("id, name")
-    .order("starts_on");
+  const [{ data: cohorts }, { data: anns, error: annErr }] = await Promise.all([
+    admin.from("cohorts").select("id, name").order("starts_on"),
+    admin
+      .from("announcements")
+      .select(
+        "id, cohort_id, title, body, created_at, cohort:cohorts(name, cohort_number)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ]);
+
+  // Pre-0027 deployments will see an error referencing the missing
+  // table. We still render the broadcast form (the broadcast action
+  // degrades gracefully) but suppress the list to avoid noise.
+  const announcementsTableMissing =
+    !!annErr &&
+    /relation .*announcements.* does not exist/i.test(annErr.message);
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -21,6 +38,59 @@ export default async function AdminAnnouncementsPage() {
       <Card className="mt-6">
         <AnnouncementForm cohorts={(cohorts ?? []) as any} />
       </Card>
+
+      <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-white/55">
+        Past announcements
+      </h2>
+      {announcementsTableMissing ? (
+        <Card className="mt-3">
+          <p className="text-sm text-white/55">
+            Announcements aren't enabled yet — apply migration{" "}
+            <code className="font-mono text-spark">
+              0027_announcements_and_reactions.sql
+            </code>
+            .
+          </p>
+        </Card>
+      ) : (anns?.length ?? 0) === 0 ? (
+        <Card className="mt-3">
+          <p className="text-sm text-white/55">No announcements sent yet.</p>
+        </Card>
+      ) : (
+        <ul className="mt-3 space-y-3">
+          {(anns ?? []).map((a: any) => {
+            const cohort = Array.isArray(a.cohort) ? a.cohort[0] : a.cohort;
+            return (
+              <li
+                key={a.id}
+                className="rounded-xl border border-white/10 bg-zinc-900/40 p-5"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className="text-base font-semibold text-white">
+                    {a.title}
+                  </h3>
+                  <span className="shrink-0 text-xs text-white/45">
+                    <LocalTime value={a.created_at} mode="datetime-short" />
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] uppercase tracking-wider text-white/40">
+                  {cohort
+                    ? cohort.cohort_number != null
+                      ? `Cohort ${cohort.cohort_number} · ${cohort.name}`
+                      : cohort.name
+                    : "All enrolled cohorts"}
+                </p>
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm text-white/80">
+                  {a.body}
+                </p>
+                <div className="mt-3 flex justify-end">
+                  <DeleteAnnouncementButton id={a.id} title={a.title} />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

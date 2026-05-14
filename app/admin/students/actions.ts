@@ -70,3 +70,34 @@ export async function changeUserRole(userId: string, role: Role) {
   revalidatePath("/admin/students");
   revalidatePath(`/admin/students/${userId}`);
 }
+
+export async function bulkChangeUserRole(input: {
+  userIds: string[];
+  role: Role;
+}): Promise<{ succeeded: number; failed: number; skipped: number }> {
+  const actorId = await ensureAdmin();
+  if (!VALID_ROLES.includes(input.role)) throw new Error("Invalid role");
+  if (input.userIds.length === 0) {
+    return { succeeded: 0, failed: 0, skipped: 0 };
+  }
+  if (input.userIds.length > 200) {
+    throw new Error("Cap bulk role changes at 200 users per run.");
+  }
+  let succeeded = 0;
+  let failed = 0;
+  let skipped = 0;
+  for (const id of input.userIds) {
+    if (id === actorId && input.role !== "admin") {
+      skipped++;
+      continue;
+    }
+    try {
+      await changeUserRole(id, input.role);
+      succeeded++;
+    } catch {
+      failed++;
+    }
+  }
+  revalidatePath("/admin/students");
+  return { succeeded, failed, skipped };
+}

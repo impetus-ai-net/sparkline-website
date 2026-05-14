@@ -77,7 +77,10 @@ export function SidebarNav({ storageKey, groups, filterItem }: Props) {
   const isSearching = query.trim().length > 0;
 
   return (
-    <div className="flex flex-1 flex-col">
+    // min-h-0 lets the inner <nav> actually scroll when nested inside a
+    // flex-col parent — without it, flex children default to their
+    // content height and overflow-y-auto silently no-ops.
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="relative mb-3">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30" />
         <input
@@ -100,7 +103,7 @@ export function SidebarNav({ storageKey, groups, filterItem }: Props) {
         )}
       </div>
 
-      <nav className="flex-1 space-y-3 overflow-y-auto pr-1">
+      <nav className="scrollbar-thin flex-1 space-y-3 overflow-y-auto pr-1">
         {visibleGroups.length === 0 && (
           <p className="px-2 py-4 text-xs text-white/40">
             No matches for "{query}".
