@@ -115,6 +115,18 @@ export default async function ApplicationPage({
           <Row label="Location" value={[app.city, app.country].filter(Boolean).join(", ")} />
           <Row label="Parent email" value={app.parent_email} />
           <Row label="Hours/week" value={app.hours_per_week?.toString()} />
+          <Row
+            label="Team size"
+            value={
+              app.team_size == null
+                ? null
+                : app.team_size === 1
+                  ? "Solo"
+                  : app.team_size >= 5
+                    ? "5+"
+                    : String(app.team_size)
+            }
+          />
           <Row label="Heard about us" value={app.referral_source} />
           <Row label="LinkedIn" value={app.linkedin_url} />
           <Row label="Resume" value={app.resume_url} />

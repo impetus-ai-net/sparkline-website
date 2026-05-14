@@ -99,6 +99,7 @@ export default async function AdminApplicationDetail({
           <Row label="Location" value={[app.city, app.country].filter(Boolean).join(", ")} />
           <Row label="Parent email" value={app.parent_email} />
           <Row label="Hours/week" value={app.hours_per_week?.toString()} />
+          <Row label="Team size" value={teamSizeAdminLabel(app.team_size)} />
           <Row label="Heard about us" value={app.referral_source} />
           <Row label="Cohort" value={(app as any).cohort?.name} />
           <Row
@@ -174,6 +175,14 @@ export default async function AdminApplicationDetail({
       </Card>
     </div>
   );
+}
+
+function teamSizeAdminLabel(value: number | null | undefined): string {
+  if (value == null) return "";
+  if (value === 1) return "Solo";
+  if (value === 2) return "2 (with co-founder)";
+  if (value >= 5) return "5+";
+  return String(value);
 }
 
 function Row({

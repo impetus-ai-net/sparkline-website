@@ -166,7 +166,6 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck },
       { href: "/admin/discord", label: "Discord", icon: MessagesSquare },
       { href: "/admin/audit", label: "Audit log", icon: ScrollText },
-      { href: "/admin/mfa", label: "Two-factor", icon: ShieldCheck },
       { href: "/admin/settings", label: "Settings", icon: Settings },
     ],
   },

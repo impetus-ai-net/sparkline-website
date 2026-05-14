@@ -12,7 +12,7 @@ This file is the result of two audit passes. Pass 1 surfaced 30+ issues; this do
 
 | Severity | Total | Fixed | Open |
 |---|---|---|---|
-| P0 (blockers) | 4 | 4 | 0 |
+| P0 (blockers) | 3 | 3 | 0 |
 | P1 (fix before launch) | 11 | 11 | 0 |
 | P2 (fix soon, not blocking) | 14 | 14 | 0 |
 | P3 (post-launch polish) | 8 | — | 8 |
@@ -26,10 +26,11 @@ All P0 / P1 / P2 work from the original audit is **landed and type-checks clean*
 
 Run these in the Supabase SQL editor in order. Each is idempotent.
 
-1. `0012_hardening.sql` — drops the MFA self-insert RLS policy, adds `notifications.dedupe_key` + partial unique index, splits Stripe webhook dedupe into claim/complete.
+1. `0012_hardening.sql` — adds `notifications.dedupe_key` + partial unique index, splits Stripe webhook dedupe into claim/complete.
 2. `0013_drop_school_features.sql` — drops `assignments`, `assignment_submissions`, `quizzes`, `quiz_questions`, `quiz_attempts` and the `submissions` storage bucket (SparkLine is an accelerator, not a school).
 3. `0014_file_feedback.sql` — adds `file_feedback` so mentors can leave threaded feedback on student or team file uploads.
 4. `0015_ai_usage.sql` — adds `ai_usage` rollup table + `ai_messages` token columns + `ai_conversations.team_id` for per-team AI scoping.
+5. `0030_drop_mfa.sql` — drops `mfa_verifications` and its policies. Two-factor auth has been removed from the product.
 
 Vercel cron config (`vercel.json`) was reduced to a single weekly digest job; the assignment-due cron was deleted with the school features.
 
@@ -37,15 +38,7 @@ Vercel cron config (`vercel.json`) was reduced to a single weekly digest job; th
 
 ## What was fixed (P0)
 
-### 1. MFA step-up was forgeable
-
-**Problem:** `mfa_verifications` had a self-insert RLS policy. Any signed-in user could call `supabase.from('mfa_verifications').insert(...)` from the browser and forge a recent step-up, bypassing `assertRecentMfa()`.
-
-**Fix:** Migration `0012` drops the policy. Only the service-role `/api/mfa/record` route can write, and it validates the session's `aal=aal2` claim first.
-
-**Goal:** Sensitive admin actions (waiving charges, role changes, future PII exports) require a *real* TOTP challenge within the last 15 minutes. Forgery from a tampered browser is no longer possible.
-
-### 2. Quiz answers leaked to the client
+### 1. Quiz answers leaked to the client
 
 **Problem:** The lesson page passed `correct_option_id` to the React tree, visible in HTML source.
 
@@ -53,7 +46,7 @@ Vercel cron config (`vercel.json`) was reduced to a single weekly digest job; th
 
 **Goal:** Anywhere we score student work in the future, the answer key never reaches the client.
 
-### 3. Mentors could grade across cohorts
+### 2. Mentors could grade across cohorts
 
 **Problem:** `gradeSubmission` / `reopenSubmission` only checked `assertStaff()`. Any mentor could grade or view any submission system-wide.
 
@@ -61,7 +54,7 @@ Vercel cron config (`vercel.json`) was reduced to a single weekly digest job; th
 
 **Goal:** A mentor only sees students in their cohort. Even with role escalation paths, file access is cohort-scoped.
 
-### 4. Open redirect on login
+### 3. Open redirect on login
 
 **Problem:** `?next=https://attacker.com` flowed straight to `window.location.assign(next)` after sign-in.
 
@@ -78,6 +71,8 @@ Vercel cron config (`vercel.json`) was reduced to a single weekly digest job; th
 **Problem:** The webhook inserted into `processed_stripe_events` at the START of processing. If a side effect threw mid-flow, Stripe ack'd as processed and never retried — the user paid but never got enrolled.
 
 **Fix:** Migration `0012` adds `processed_stripe_events.completed_at`. The handler inserts with `completed_at = null` (claim), runs side effects, then updates `completed_at = now()` (complete). On retry: if the row exists but `completed_at` is null, the side effects re-run (they're already idempotent — upserts on `user_charges`, conditional updates on `applications`).
+
+(Two-factor / MFA was previously listed under hardening but has since been removed from the product — see migration `0030_drop_mfa.sql`.)
 
 **Goal:** A crash mid-webhook leaves the system in a recoverable state. Stripe's next delivery picks it back up.
 
@@ -287,8 +282,7 @@ Configuration tasks no code can do for you.
 4. **Environment variables** present in production. Required: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `ANTHROPIC_API_KEY`, `CRON_SECRET`, `NEXT_PUBLIC_SITE_URL`. Optional: `NEXT_PUBLIC_SENTRY_DSN` (error reporting), `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN`, `DISCORD_GUILD_ID`, `DISCORD_PUBLIC_KEY` (Ed25519 key for slash-command verification), `DISCORD_ROLE_STUDENT`, `DISCORD_ANNOUNCEMENTS_WEBHOOK`, `RESEND_API_KEY` + `RESEND_FROM` (transactional email via Resend — without them, `sendEmail` no-ops in dev and logs `disabled` in prod).
 5. **Stripe webhook endpoint** points at `https://<domain>/api/stripe/webhook` with `checkout.session.completed`, `payment_intent.succeeded`, and `charge.refunded` subscribed.
 6. **Supabase Auth settings:** "Confirm email" is enabled (otherwise typo-emails silently succeed at signup).
-7. **Admins enroll TOTP** at `/admin/mfa` first thing post-deploy. Until they do, MFA gating gracefully no-ops so the app still works — but sensitive actions are unprotected.
-8. **Smoke test Demo Day** end-to-end before announcing: one test team submits a deck + video, an investor scores it, an investor requests an intro, an admin progresses the intro through the funnel.
+7. **Smoke test Demo Day** end-to-end before announcing: one test team submits a deck + video, an investor scores it, an investor requests an intro, an admin progresses the intro through the funnel.
 
 ---
 

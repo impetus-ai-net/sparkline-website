@@ -17,6 +17,19 @@ const STEPS = [
   { id: 4, title: "Review & submit" },
 ] as const;
 
+const TEAM_SIZE_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: "Solo (just me)" },
+  { value: 2, label: "2 (me + 1 co-founder)" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5+" },
+];
+
+function teamSizeLabel(value: string): string {
+  const opt = TEAM_SIZE_OPTIONS.find((o) => String(o.value) === value);
+  return opt?.label ?? "";
+}
+
 type FormState = {
   full_name: string;
   age: string;
@@ -29,6 +42,7 @@ type FormState = {
   startup_idea: string;
   experience: string;
   hours_per_week: string;
+  team_size: string;
   referral_source: string;
   linkedin_url: string;
   resume_url: string;
@@ -79,6 +93,12 @@ function validateStep(
           ? "Required"
           : "Tell us at least a couple sentences";
     }
+    const sizeNum = parseInt(form.team_size, 10);
+    if (!form.team_size) {
+      errs.team_size = "Pick a team size";
+    } else if (Number.isNaN(sizeNum) || sizeNum < 1 || sizeNum > 5) {
+      errs.team_size = "Pick a team size";
+    }
   }
   return errs;
 }
@@ -128,6 +148,7 @@ export function ApplicationForm({
     startup_idea: defaults?.startup_idea ?? "",
     experience: defaults?.experience ?? "",
     hours_per_week: defaults?.hours_per_week?.toString() ?? "",
+    team_size: defaults?.team_size?.toString() ?? "",
     referral_source: defaults?.referral_source ?? "",
     linkedin_url: defaults?.linkedin_url ?? "",
     resume_url: defaults?.resume_url ?? "",
@@ -196,6 +217,7 @@ export function ApplicationForm({
     form.startup_idea,
     form.experience,
     form.hours_per_week,
+    form.team_size,
     form.referral_source,
     form.linkedin_url,
     form.resume_url,
@@ -568,6 +590,43 @@ export function ApplicationForm({
               placeholder="It's totally fine if you don't. Tell us anything you've been thinking about."
             />
           </div>
+          <div>
+            <Label required>
+              Founding team size{" "}
+              <span aria-hidden className="text-spark">*</span>
+            </Label>
+            <p className="mt-0.5 mb-2 text-xs text-white/55">
+              How many of you are working on this together? You don't need to
+              list anyone — just the count, including yourself.
+            </p>
+            <div
+              role="radiogroup"
+              aria-label="Founding team size"
+              aria-required="true"
+              className="flex flex-wrap gap-2"
+            >
+              {TEAM_SIZE_OPTIONS.map((opt) => {
+                const selected = form.team_size === String(opt.value);
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => set("team_size", String(opt.value))}
+                    className={`rounded-lg border px-3 py-2 text-sm transition active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spark/60 ${
+                      selected
+                        ? "border-spark bg-spark/15 text-white"
+                        : "border-white/15 bg-black/20 text-white/75 hover:border-white/30 hover:text-white"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+            <FieldError id="team_size-error">{fieldErrors.team_size}</FieldError>
+          </div>
         </div>
       )}
 
@@ -587,6 +646,10 @@ export function ApplicationForm({
             />
             <ReviewRow label="Parent email" value={form.parent_email} />
             <ReviewRow label="Hours/week" value={form.hours_per_week} />
+            <ReviewRow
+              label="Team size"
+              value={teamSizeLabel(form.team_size)}
+            />
             <ReviewRow label="Heard about us" value={form.referral_source} />
             <ReviewRow label="LinkedIn" value={form.linkedin_url} />
             <ReviewRow label="Resume" value={form.resume_url} />

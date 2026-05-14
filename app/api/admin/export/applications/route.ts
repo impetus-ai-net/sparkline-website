@@ -13,7 +13,7 @@ export async function GET() {
   const { data } = await admin
     .from("applications")
     .select(
-      "id, status, created_at, submitted_at, reviewed_at, full_name, age, grade, school, city, country, parent_email, hours_per_week, referral_source, referral_code, linkedin_url, resume_url, portfolio_url, why_join, startup_idea, experience, cohort:cohorts(name), profile:profiles!applications_user_id_fkey(email)",
+      "id, status, created_at, submitted_at, reviewed_at, full_name, age, grade, school, city, country, parent_email, hours_per_week, team_size, referral_source, referral_code, linkedin_url, resume_url, portfolio_url, why_join, startup_idea, experience, cohort:cohorts(name), profile:profiles!applications_user_id_fkey(email)",
     )
     .order("created_at", { ascending: false });
 
@@ -35,6 +35,7 @@ export async function GET() {
       a.country ?? "",
       a.parent_email ?? "",
       a.hours_per_week ?? "",
+      a.team_size ?? "",
       a.referral_source ?? "",
       a.referral_code ?? "",
       a.linkedin_url ?? "",
@@ -63,6 +64,7 @@ export async function GET() {
       "country",
       "parent_email",
       "hours_per_week",
+      "team_size",
       "referral_source",
       "referral_code",
       "linkedin_url",

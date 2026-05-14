@@ -24,7 +24,7 @@ export async function aiScreenApplication(input: { applicationId: string }) {
   const { data: app, error } = await admin
     .from("applications")
     .select(
-      "id, full_name, age, grade, school, city, country, why_join, startup_idea, experience, hours_per_week, linkedin_url, portfolio_url",
+      "id, full_name, age, grade, school, city, country, why_join, startup_idea, experience, hours_per_week, team_size, linkedin_url, portfolio_url",
     )
     .eq("id", input.applicationId)
     .single();
@@ -36,6 +36,7 @@ export async function aiScreenApplication(input: { applicationId: string }) {
 
   const userBlock = `Applicant: ${app.full_name ?? "—"}, age ${app.age ?? "?"}, grade ${app.grade ?? "?"}, ${app.school ?? "?"}, ${app.city ?? ""} ${app.country ?? ""}
 Hours/week available: ${app.hours_per_week ?? "?"}
+Founding team size: ${app.team_size ?? "?"} ${app.team_size === 1 ? "(solo)" : app.team_size && app.team_size >= 5 ? "(5+)" : ""}
 LinkedIn: ${app.linkedin_url ?? "—"}
 Portfolio: ${app.portfolio_url ?? "—"}
 

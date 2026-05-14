@@ -358,6 +358,7 @@ export type Application = {
   startup_idea: string | null;
   experience: string | null;
   hours_per_week: number | null;
+  team_size: number | null;
   referral_source: string | null;
   linkedin_url: string | null;
   resume_url: string | null;

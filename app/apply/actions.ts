@@ -64,6 +64,11 @@ const SubmitSchema = z
       .max(168)
       .optional()
       .or(z.literal("")),
+    team_size: z.coerce
+      .number()
+      .int()
+      .min(1, "Pick a team size")
+      .max(5, "Pick a team size"),
     referral_source: optionalString(200),
     referral_code: optionalString(32),
     linkedin_url: optionalUrl,
@@ -113,6 +118,9 @@ const DraftSchema = z.object({
   experience: optionalString(2000),
   hours_per_week: z
     .union([z.coerce.number().int().min(0).max(168), z.literal("")])
+    .optional(),
+  team_size: z
+    .union([z.coerce.number().int().min(1).max(5), z.literal("")])
     .optional(),
   referral_source: optionalString(200),
   referral_code: optionalString(32),
@@ -241,6 +249,10 @@ async function upsertApplication(
       data.hours_per_week === "" || data.hours_per_week === undefined
         ? null
         : Number(data.hours_per_week),
+    team_size:
+      data.team_size === "" || data.team_size === undefined
+        ? null
+        : Number(data.team_size),
     referral_source: data.referral_source || null,
     referral_code:
       typeof data.referral_code === "string" && data.referral_code
