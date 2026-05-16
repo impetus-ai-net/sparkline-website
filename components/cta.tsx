@@ -65,7 +65,7 @@ export default function CTA({ config }: { config: SiteConfig }) {
           </div>
 
           {/* Action column */}
-          <div className="flex flex-col gap-5 border-t border-white/10 p-6 sm:p-8 md:border-l md:border-t-0 md:p-10">
+          <div className="flex flex-col justify-center gap-5 border-t border-white/10 p-6 sm:p-8 md:border-l md:border-t-0 md:p-10">
             {(derived.spotsLabel || derived.applicationsCountdownLabel) && (
               <div className="rounded-lg border border-spark/30 bg-spark/[0.06] px-3 py-2 text-[12px] sm:text-xs text-spark">
                 {derived.applicationsCountdownLabel || derived.spotsLabel}
