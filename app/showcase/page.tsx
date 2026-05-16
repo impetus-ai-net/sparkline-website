@@ -6,7 +6,7 @@ import Footer from "@/components/footer";
 
 export const metadata = {
   title: "Showcase · SparkLine Youth",
-  description: "Startups built by high-school founders at SparkLine Youth.",
+  description: "Projects built by high schoolers at SparkLine Youth — startups, hardware, research, creative, and social impact.",
 };
 
 export default async function ShowcaseIndex() {
@@ -34,7 +34,7 @@ export default async function ShowcaseIndex() {
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-white/60">
             Our first cohort is still building. Check back after Demo Day to
-            meet the startups.
+            meet the projects.
           </p>
         </section>
         <Footer />
@@ -68,11 +68,12 @@ export default async function ShowcaseIndex() {
           Showcase
         </p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-6xl">
-          Startups from SparkLine Youth
+          Projects from SparkLine Youth
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-white/60">
-          Real startups built by high schoolers. Pick a cohort to see what
-          they shipped.
+          Real projects built by high schoolers — startups, hardware,
+          research, creative, and social impact. Pick a cohort to see
+          what they shipped.
         </p>
 
         <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -89,7 +90,7 @@ export default async function ShowcaseIndex() {
                   {c.name}
                 </h3>
                 <p className="mt-1 text-sm text-white/60">
-                  {count} {count === 1 ? "startup" : "startups"}
+                  {count} {count === 1 ? "project" : "projects"}
                 </p>
               </Link>
             );

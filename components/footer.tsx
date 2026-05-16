@@ -20,10 +20,11 @@ export default async function Footer({ config }: { config?: SiteConfig }) {
             </span>
           </div>
           <p className="mt-4 max-w-sm text-sm text-white/70 leading-relaxed">
-            A 4-week, fully virtual startup accelerator for U.S. high
-            schoolers. Built around real customer discovery, real mentors,
-            and a Demo Day that ends with real cash grants from our sponsor
-            partners.
+            A 4-week, fully virtual program for U.S. high schoolers
+            building real projects — startups, hardware, research,
+            creative, or social impact. Built around real discovery, real
+            mentors, and a Demo Day that ends with real cash grants from
+            our sponsor partners.
           </p>
           <p className="mt-5 text-xs text-white/55">
             sparklineyouth.org · Built in Plainsboro, NJ

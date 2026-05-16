@@ -29,13 +29,14 @@ export default function Problem() {
               The problem
             </p>
             <h2 className="mt-3 text-[32px] sm:text-4xl md:text-5xl font-bold tracking-[-0.02em] text-white leading-[1.05]">
-              Youth entrepreneurship is broken.
+              Youth project funding is broken.
             </h2>
             <p className="mt-4 sm:mt-5 text-base sm:text-lg text-white/75 leading-relaxed">
-              Talented teens don't need another business-plan competition.
-              They need access — and right now that's reserved for the
-              families who can afford the tuition or happen to live in the
-              right city.
+              Talented teens building real things — startups, hardware,
+              research, art — don't need another business-plan
+              competition. They need funding access. Right now that's
+              reserved for the families who can afford it or happen to
+              live in the right city.
             </p>
           </Reveal>
 

@@ -3,6 +3,7 @@ import Navbar from "@/components/navbar";
 import Hero from "@/components/hero";
 import Marquee from "@/components/marquee";
 import Problem from "@/components/problem";
+import Builds from "@/components/builds";
 import Curriculum from "@/components/curriculum";
 import Stats from "@/components/stats";
 import Comparison from "@/components/comparison";
@@ -33,6 +34,7 @@ export default async function Home() {
       <Hero config={config} authedHome={authedHome} />
       <Marquee />
       <Problem />
+      <Builds />
       <ScrollPreview config={config} />
       <Curriculum />
       <Stats config={config} />

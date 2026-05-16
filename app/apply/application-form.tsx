@@ -684,7 +684,7 @@ export function ApplicationForm({
           </div>
           <div>
             <Label htmlFor="startup_idea">
-              Do you have a startup idea? (optional)
+              Do you have a project idea? (optional)
             </Label>
             <Textarea
               id="startup_idea"
@@ -767,7 +767,7 @@ export function ApplicationForm({
             <ReviewRow label="Resume" value={form.resume_url} />
             <ReviewRow label="Portfolio" value={form.portfolio_url} />
             <ReviewRow label="Why SparkLine Youth" value={form.why_join} multiline />
-            <ReviewRow label="Startup idea" value={form.startup_idea} multiline />
+            <ReviewRow label="Project idea" value={form.startup_idea} multiline />
             <ReviewRow label="Experience" value={form.experience} multiline />
           </div>
           <div className="rounded-xl border border-spark/30 bg-spark/5 p-4 text-sm text-white/70">

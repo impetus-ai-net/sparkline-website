@@ -14,9 +14,9 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sparklineyouth.org"),
-  title: "SparkLine Youth — The Startup Accelerator for High Schoolers",
+  title: "SparkLine Youth — The 4-Week Builder Program for High Schoolers",
   description:
-    "SparkLine Youth is a 4-week, fully virtual accelerator for high schoolers. Build a real startup, pitch for real grant funding, keep 100% of your equity. Just $97.",
+    "Build something real in 4 weeks — startup, hardware, research, or creative. Pitch for real grant funding. Keep 100% of your equity. Just $97. For U.S. high schoolers.",
   keywords: [
     "high school startup accelerator",
     "youth entrepreneurship",
@@ -25,9 +25,9 @@ export const metadata: Metadata = {
     "SparkLine Youth",
   ],
   openGraph: {
-    title: "SparkLine Youth — The Startup Accelerator for High Schoolers",
+    title: "SparkLine Youth — The 4-Week Builder Program for High Schoolers",
     description:
-      "Build a real startup in 4 weeks. Pitch for real grant funding. Keep 100% of your equity — before you graduate.",
+      "Build something real in 4 weeks — startup, hardware, research, or creative. Pitch for real grant funding. Keep 100% of your equity — before you graduate.",
     url: "https://sparklineyouth.org",
     siteName: "SparkLine Youth",
     // Image is generated dynamically by app/opengraph-image.tsx and picked
@@ -36,9 +36,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SparkLine Youth — The Startup Accelerator for High Schoolers",
+    title: "SparkLine Youth — The 4-Week Builder Program for High Schoolers",
     description:
-      "Build a real startup in 4 weeks. Pitch for real grant funding. Keep 100% of your equity — before you graduate.",
+      "Build something real in 4 weeks — startup, hardware, research, or creative. Pitch for real grant funding. Keep 100% of your equity — before you graduate.",
   },
   icons: {
     icon: "/logo.svg",
@@ -57,7 +57,7 @@ const orgJsonLd = {
   url: "https://sparklineyouth.org",
   logo: "https://sparklineyouth.org/logo.svg",
   description:
-    "SparkLine Youth is a 4-week, fully virtual startup accelerator for U.S. high schoolers. Students build a real startup and pitch for cash grants from our sponsor partners — keeping 100% of their equity — for $97.",
+    "SparkLine Youth is a 4-week, fully virtual program for U.S. high schoolers. Students build something real — startup, hardware, research, or creative — and pitch for cash grants from our sponsor partners, keeping 100% of their equity, for $97.",
   sameAs: ["https://sparklineyouth.org"],
   address: {
     "@type": "PostalAddress",
@@ -80,7 +80,7 @@ const orgJsonLd = {
     price: "97",
     priceCurrency: "USD",
     category: "Tuition",
-    description: "4-week virtual startup accelerator cohort tuition",
+    description: "4-week virtual builder program cohort tuition",
   },
 };
 

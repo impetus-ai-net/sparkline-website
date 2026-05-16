@@ -12,7 +12,7 @@ export default function FAQ({ config }: { config: SiteConfig }) {
   const faqs = [
     {
       q: "Who is SparkLine Youth for?",
-      a: "Any U.S. high schooler ages 13–18 with a business idea — or even a half-baked one — and the motivation to build it. No prior experience required.",
+      a: "Any U.S. high schooler ages 13–18 building something real — a startup, hardware project, research idea, creative build, or social-impact project. Even a half-baked idea works. No prior experience required.",
     },
     {
       q: "How much does it cost?",
@@ -28,7 +28,7 @@ export default function FAQ({ config }: { config: SiteConfig }) {
     },
     {
       q: "What if I don't have an idea yet?",
-      a: "Week 1 is built for that. We walk you through customer discovery and problem validation so you can find a real opportunity — not just guess.",
+      a: "Week 1 is built for that. We walk you through scoping and validation — whether you're hunting for a startup, a hardware project, a research question, a creative concept, or a social-impact angle — so you find a real opportunity, not just guess.",
     },
     {
       q: "How big are the cohorts?",

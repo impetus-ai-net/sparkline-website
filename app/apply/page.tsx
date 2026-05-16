@@ -8,18 +8,18 @@ import { Card } from "@/components/ui/card";
 export const metadata = {
   title: "Apply · SparkLine Youth",
   description:
-    "Apply to SparkLine Youth — the 4-week, fully virtual startup accelerator for U.S. high schoolers. Rolling admissions; $97 once accepted.",
+    "Apply to SparkLine Youth — the 4-week, fully virtual builder program for U.S. high schoolers. Build something real — startup, hardware, research, or creative. Rolling admissions; $97 once accepted.",
   openGraph: {
     title: "Apply to SparkLine Youth",
     description:
-      "Take your idea from raw concept to investor-ready pitch in 4 weeks. Rolling admissions. $97 once accepted.",
+      "Take your project — startup, hardware, research, or creative — from raw concept to funded reality in 4 weeks. Rolling admissions. $97 once accepted.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Apply to SparkLine Youth",
     description:
-      "The 4-week, fully virtual startup accelerator for U.S. high schoolers. Rolling admissions. $97.",
+      "The 4-week, fully virtual builder program for U.S. high schoolers. Rolling admissions. $97.",
   },
   // Application is gated and the form mutates server state — keep search
   // engines out even though middleware also redirects unauthed crawlers.

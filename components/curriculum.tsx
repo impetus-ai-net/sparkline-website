@@ -6,21 +6,21 @@ const weeks = [
     week: "Week 1",
     title: "Validate",
     body:
-      "Lean Canvas. Problem/solution fit. Real customer-discovery interviews. End the week with a hypothesis you've actually tested.",
-    deliverable: "Validated Lean Canvas",
+      "Lean Canvas (startups) or project scoping doc (builds/research). Problem-solution fit. Real user or stakeholder interviews. End the week with a hypothesis you've actually tested.",
+    deliverable: "Validated Lean Canvas or Project Brief",
   },
   {
     week: "Week 2",
     title: "Build",
     body:
-      "Business Model Canvas, revenue model, pricing strategy. Turn your idea into a viable business — not a school project.",
+      "Business model + revenue (startups) or resource plan + technical milestones (projects). Turn your idea into something real and sustainable — not a school project.",
     deliverable: "Business Model + Pricing",
   },
   {
     week: "Week 3",
     title: "Market",
     body:
-      "Go-to-market strategy, competitive analysis, brand positioning. Find your first hundred customers and the wedge that gets you there.",
+      "Go-to-market or audience-and-distribution plan, competitive/landscape analysis, brand positioning. Find your first hundred users, readers, customers, or backers — and the wedge that gets you there.",
     deliverable: "GTM Plan + Brand",
   },
   {
@@ -46,7 +46,7 @@ export default function Curriculum() {
             </h2>
             <p className="mt-4 sm:mt-5 text-base sm:text-lg text-white/75 leading-relaxed">
               Every week ends with a structured deliverable. You finish the
-              program with a complete, fundable startup package — not a
+              program with a complete, fundable project package — not a
               participation certificate.
             </p>
           </Reveal>

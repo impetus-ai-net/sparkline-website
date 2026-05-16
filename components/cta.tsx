@@ -18,7 +18,7 @@ export default function CTA({ config }: { config: SiteConfig }) {
             Reserve your seat
           </p>
           <h2 className="mt-3 text-[34px] sm:text-4xl md:text-6xl font-bold tracking-[-0.03em] leading-[1.05] sm:leading-[1.02] text-white">
-            Your startup, funded,
+            Your project, funded,
             <br />
             before you graduate.
           </h2>
@@ -60,7 +60,7 @@ export default function CTA({ config }: { config: SiteConfig }) {
               <Bullet>4 weeks, fully virtual</Bullet>
               <Bullet>Live mentor sessions + Discord community</Bullet>
               <Bullet>Pitch our sponsor-funded grant panel on Demo Day</Bullet>
-              <Bullet>Walk away with a fundable startup package</Bullet>
+              <Bullet>Walk away with a fundable project package</Bullet>
             </ul>
           </div>
 

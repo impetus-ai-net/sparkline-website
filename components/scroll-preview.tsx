@@ -80,7 +80,7 @@ export default function ScrollPreview({ config }: { config: SiteConfig }) {
             The product
           </p>
           <h2 className="mt-3 text-[28px] font-bold tracking-[-0.02em] text-white leading-[1.05]">
-            From idea to <span className="shine">funded startup</span>
+            From idea to <span className="shine">funded project</span>
           </h2>
           <p className="mt-3 text-[15px] text-white/75 leading-[1.55]">
             Live curriculum, weekly deliverables, real mentors, and a cohort
@@ -142,7 +142,7 @@ export default function ScrollPreview({ config }: { config: SiteConfig }) {
                 The product
               </p>
               <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-[-0.02em] text-white leading-[1.05]">
-                From idea to <span className="shine">funded startup</span>
+                From idea to <span className="shine">funded project</span>
               </h2>
               <p className="mt-4 max-w-2xl text-base md:text-lg text-white/75 mx-auto leading-relaxed">
                 Live curriculum, weekly deliverables, real mentors, and a

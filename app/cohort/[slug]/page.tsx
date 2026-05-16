@@ -20,12 +20,12 @@ export async function generateMetadata({
     title: `${cohort.name} · SparkLine Youth`,
     description:
       (cohort as any).landing_subhead ||
-      `Startups built in ${cohort.name} at SparkLine Youth.`,
+      `Projects built in ${cohort.name} at SparkLine Youth.`,
     openGraph: {
       title: (cohort as any).landing_headline ?? cohort.name,
       description:
         (cohort as any).landing_subhead ||
-        `Startups built in ${cohort.name} at SparkLine Youth.`,
+        `Projects built in ${cohort.name} at SparkLine Youth.`,
     },
   };
 }
@@ -74,11 +74,11 @@ export default async function CohortShowcase({
           Showcase · {cohort.name}
         </p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-6xl">
-          {c.landing_headline || "Startups built at SparkLine Youth"}
+          {c.landing_headline || "Projects built at SparkLine Youth"}
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-white/60">
           {c.landing_subhead ||
-            `Real startups built by high schoolers in the ${cohort.name} cohort. Click through to see what they're working on.`}
+            `Real projects built by high schoolers in the ${cohort.name} cohort. Click through to see what they're working on.`}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
