@@ -343,10 +343,62 @@ export function ApplicationForm({
   const parentEmailRequired = !Number.isNaN(ageNum) && ageNum < 18;
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-6 md:p-8">
-      {/* Stepper */}
+    <div className="rounded-2xl border border-white/10 bg-zinc-900/40 p-5 sm:p-6 md:p-8">
+      {/* Mobile stepper: compact progress + current label only. The full
+          4-up stepper wraps awkwardly under 380px. */}
+      <div
+        className="mb-6 sm:hidden"
+        aria-label={`Application progress: step ${step} of ${STEPS.length}`}
+      >
+        <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-[0.18em]">
+          <span className="text-spark">
+            Step {step} of {STEPS.length}
+          </span>
+          <span className="text-white/55">
+            {STEPS.find((s) => s.id === step)?.title}
+          </span>
+        </div>
+        <div
+          aria-hidden
+          className="mt-2 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]"
+        >
+          <div
+            className="h-full bg-spark transition-all duration-300"
+            style={{ width: `${(step / STEPS.length) * 100}%` }}
+          />
+        </div>
+        <div className="mt-3 flex items-center gap-1.5">
+          {STEPS.map((s) => {
+            const hasErr = stepHasErrors(s.id) && step > s.id;
+            const isCurrent = step === s.id;
+            const reached = step >= s.id;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setStep(s.id)}
+                aria-label={`Jump to step ${s.id}: ${s.title}`}
+                aria-current={isCurrent ? "step" : undefined}
+                className={`flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-medium ${
+                  isCurrent
+                    ? "border-spark bg-spark text-black"
+                    : reached
+                      ? hasErr
+                        ? "border-red-400/60 bg-red-400/10 text-red-300"
+                        : "border-spark/40 bg-spark/10 text-spark"
+                      : "border-white/15 text-white/40"
+                }`}
+              >
+                {hasErr ? <AlertCircle className="h-3.5 w-3.5" /> : s.id}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop stepper */}
       <ol
-        className="mb-8 flex flex-wrap items-center gap-2 text-xs"
+        className="mb-8 hidden sm:flex flex-wrap items-center gap-2 text-xs"
         aria-label={`Application progress: step ${step} of ${STEPS.length}`}
       >
         {STEPS.map((s, i) => {

@@ -128,8 +128,8 @@ export default async function ApplyPage({
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[40rem] bg-spark-radial opacity-50"
       />
-      <div className="relative mx-auto max-w-3xl px-6 py-16">
-        <div className="mb-8 flex items-center justify-between">
+      <div className="relative mx-auto max-w-3xl px-5 sm:px-6 py-10 sm:py-16">
+        <div className="mb-6 sm:mb-8 flex items-center justify-between">
           <Link href="/dashboard" className="text-sm text-white/55 hover:text-white">
             ← Dashboard
           </Link>
@@ -145,10 +145,10 @@ export default async function ApplyPage({
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-spark">
           {reapplying ? "Reapply" : "Apply"}
         </p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">
+        <h1 className="mt-3 text-[30px] sm:text-4xl font-bold tracking-tight text-white leading-[1.1]">
           Apply to SparkLine
         </h1>
-        <p className="mt-3 max-w-2xl text-white/75">
+        <p className="mt-3 max-w-2xl text-[15px] sm:text-base text-white/75 leading-[1.55]">
           {cohortName} is capped at {capacity} students. Applications are
           reviewed on a rolling basis. After your application is accepted,
           you'll pay ${priceDollars} to lock in your seat.

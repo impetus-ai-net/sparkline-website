@@ -9,6 +9,7 @@ import Comparison from "@/components/comparison";
 import FAQ from "@/components/faq";
 import CTA from "@/components/cta";
 import Footer from "@/components/footer";
+import StickyMobileCta from "@/components/sticky-mobile-cta";
 import { getSiteConfig } from "@/lib/site-config";
 import { getProfile, roleHome } from "@/lib/auth";
 
@@ -17,7 +18,7 @@ import { getProfile, roleHome } from "@/lib/auth";
 // defer its JS until the user is past the hero. Reserve roughly the same
 // height it occupies to avoid layout shift while it streams in.
 const ScrollPreview = dynamic(() => import("@/components/scroll-preview"), {
-  loading: () => <div aria-hidden className="h-[42rem] md:h-[80rem]" />,
+  loading: () => <div aria-hidden className="h-[60rem] md:h-[80rem]" />,
 });
 
 export default async function Home() {
@@ -39,6 +40,7 @@ export default async function Home() {
       <FAQ config={config} />
       <CTA config={config} />
       <Footer config={config} />
+      <StickyMobileCta config={config} authedHome={authedHome} />
     </main>
   );
 }
