@@ -20,6 +20,7 @@ export default function LoginPage({
   searchParams: { next?: string; error?: string };
 }) {
   const safe = safeNext(searchParams.next);
+  const signupHref = safe ? `/signup?next=${encodeURIComponent(safe)}` : "/signup";
   return (
     <div>
       <h1 className="text-2xl font-bold tracking-tight text-white">Welcome back</h1>
@@ -29,7 +30,7 @@ export default function LoginPage({
       <LoginForm next={safe} initialError={searchParams.error} />
       <p className="mt-6 text-center text-sm text-white/50">
         New here?{" "}
-        <Link href="/signup" className="text-spark hover:underline">
+        <Link href={signupHref} className="text-spark hover:underline">
           Create an account
         </Link>
       </p>

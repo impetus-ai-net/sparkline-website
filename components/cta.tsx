@@ -81,7 +81,7 @@ export default function CTA({ config }: { config: SiteConfig }) {
               </div>
             )}
             <Link
-              href="/signup"
+              href="/signup?next=%2Fapply"
               className="press group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-spark px-6 py-4 text-[15px] font-semibold text-black shadow-[0_8px_24px_-8px_rgba(250,204,21,0.5)] hover:bg-spark-200"
             >
               Start your application

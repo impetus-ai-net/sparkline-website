@@ -7,7 +7,7 @@ import { friendlyAuthError } from "@/lib/auth-errors";
 
 const REF_KEY = "sparkline_ref";
 
-export function SignupForm() {
+export function SignupForm({ next }: { next?: string }) {
   const [fullName, setFullName] = useState("");
 
   // Capture ?ref= from URL on mount and stash for later (sticks across
@@ -36,12 +36,20 @@ export function SignupForm() {
     setLoading(true);
     setError(undefined);
     const supabase = createClient();
+    // Round-trip `next` through the email-confirmation hop so the user
+    // lands where they were trying to go (typically /apply) instead of
+    // /dashboard. Defense-in-depth: callback rejects off-origin paths.
+    const safeNext =
+      next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+    const callbackUrl = safeNext
+      ? `${location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
+      : `${location.origin}/auth/callback`;
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl,
       },
     });
     if (error) {
@@ -55,18 +63,23 @@ export function SignupForm() {
       setLoading(false);
       return;
     }
-    window.location.assign("/dashboard");
+    window.location.assign(safeNext ?? "/dashboard");
   }
 
   async function resendVerification() {
     setResendState("sending");
     setResendMessage(undefined);
     const supabase = createClient();
+    const safeNext =
+      next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+    const callbackUrl = safeNext
+      ? `${location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
+      : `${location.origin}/auth/callback`;
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
       options: {
-        emailRedirectTo: `${location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl,
       },
     });
     if (error) {

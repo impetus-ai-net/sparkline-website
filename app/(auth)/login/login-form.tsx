@@ -63,11 +63,18 @@ export function LoginForm({
     setResendState("sending");
     setResendMessage(undefined);
     const supabase = createClient();
+    // Carry `next` through the verification email so the user lands on
+    // their intended page (e.g. /apply) after confirming, not /dashboard.
+    const safeNext =
+      next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+    const callbackUrl = safeNext
+      ? `${location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`
+      : `${location.origin}/auth/callback`;
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
       options: {
-        emailRedirectTo: `${location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl,
       },
     });
     if (error) {
