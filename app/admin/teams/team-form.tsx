@@ -136,7 +136,7 @@ export function TeamForm({
         </div>
       </div>
       <Toggle
-        label="Public showcase"
+        label="Public team page"
         description={`When on, ${t.id ? `${typeof window !== "undefined" ? window.location.origin : ""}/teams/${slugifyClient(t.name)}` : "the team's slug"} is publicly indexable.`}
         checked={t.is_public}
         onChange={(v) => setT({ ...t, is_public: v })}

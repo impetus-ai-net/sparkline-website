@@ -120,8 +120,8 @@ export function TeamProfileTab({ team }: { team: Team }) {
       <Card>
         <h3 className="text-base font-semibold">Logo</h3>
         <p className="mt-1 text-xs text-white/50">
-          Used on team pages + the public showcase. Uploads are reviewed
-          before showing publicly to keep cohorts safe.
+          Used on your team's public page. Uploads are reviewed before
+          showing publicly to keep cohorts safe.
         </p>
         <div className="mt-4 flex items-center gap-4">
           <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-900">

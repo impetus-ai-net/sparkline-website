@@ -27,7 +27,7 @@ export default async function Footer({ config }: { config?: SiteConfig }) {
             our sponsor partners.
           </p>
           <p className="mt-5 text-xs text-white/55">
-            sparklineyouth.org · Built in Plainsboro, NJ
+            sparklineyouth.org
           </p>
         </div>
 

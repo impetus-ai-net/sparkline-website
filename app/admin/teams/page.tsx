@@ -34,7 +34,7 @@ export default async function AdminTeamsPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Teams</h1>
           <p className="mt-1 text-sm text-white/55">
-            Cohort startups. Public teams get a shareable showcase page.
+            Cohort startups. Public teams get a shareable team page.
           </p>
         </div>
         <Link

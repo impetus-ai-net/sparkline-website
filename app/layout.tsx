@@ -59,12 +59,6 @@ const orgJsonLd = {
   description:
     "SparkLine Youth is a 4-week, fully virtual program for U.S. high schoolers. Students build something real — startup, hardware, research, or creative — and pitch for cash grants from our sponsor partners, keeping 100% of their equity, for $97.",
   sameAs: ["https://sparklineyouth.org"],
-  address: {
-    "@type": "PostalAddress",
-    addressLocality: "Plainsboro",
-    addressRegion: "NJ",
-    addressCountry: "US",
-  },
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer support",

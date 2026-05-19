@@ -58,7 +58,7 @@ export default async function TeamProfile({
           href={`/cohort/${cohort.slug}`}
           className="text-sm text-white/55 hover:text-white"
         >
-          ← {cohort.name} showcase
+          ← Back to {cohort.name}
         </Link>
 
         <div className="mt-6 flex items-start gap-5">

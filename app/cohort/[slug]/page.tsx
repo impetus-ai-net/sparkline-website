@@ -15,7 +15,7 @@ export async function generateMetadata({
     .select("name, landing_headline, landing_subhead")
     .eq("slug", params.slug)
     .maybeSingle();
-  if (!cohort) return { title: "Showcase · SparkLine Youth" };
+  if (!cohort) return { title: "Cohort · SparkLine Youth" };
   return {
     title: `${cohort.name} · SparkLine Youth`,
     description:
@@ -30,7 +30,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function CohortShowcase({
+export default async function CohortPage({
   params,
 }: {
   params: { slug: string };
@@ -71,7 +71,7 @@ export default async function CohortShowcase({
           className="text-sm font-medium uppercase tracking-[0.2em]"
           style={{ color: "var(--accent)" }}
         >
-          Showcase · {cohort.name}
+          {cohort.name}
         </p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-6xl">
           {c.landing_headline || "Projects built at SparkLine Youth"}

@@ -5,12 +5,10 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 
 // Use absolute hrefs (`/#anchor`) so hash links still resolve when the
-// navbar is rendered on subroutes like `/showcase` or `/cohort/[slug]`.
+// navbar is rendered on subroutes like `/cohort/[slug]`.
 const LINKS = [
   { href: "/#how-it-works", label: "Program" },
   { href: "/#curriculum", label: "Curriculum" },
-  { href: "/showcase", label: "Showcase" },
-  { href: "/alumni", label: "Alumni" },
   { href: "/sponsors", label: "Sponsors" },
   { href: "/#faq", label: "FAQ" },
 ] as const;
