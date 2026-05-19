@@ -90,9 +90,9 @@ export function NotificationItem({ n }: { n: N }) {
           <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-3">
+          <div className="flex items-start justify-between gap-3">
             <p
-              className={`text-[15px] leading-snug ${
+              className={`min-w-0 flex-1 break-words text-[15px] leading-snug ${
                 isUnread
                   ? "font-medium text-white"
                   : "font-normal text-white/65"
@@ -101,7 +101,7 @@ export function NotificationItem({ n }: { n: N }) {
               {n.title}
             </p>
             <p
-              className={`shrink-0 text-[11px] tabular-nums ${
+              className={`shrink-0 pt-0.5 text-[11px] tabular-nums ${
                 isUnread ? "text-white/55" : "text-white/35"
               }`}
             >
@@ -110,7 +110,7 @@ export function NotificationItem({ n }: { n: N }) {
           </div>
           {n.body && (
             <p
-              className={`mt-1 text-sm leading-relaxed ${
+              className={`mt-1 break-words text-sm leading-relaxed ${
                 isUnread ? "text-white/70" : "text-white/50"
               }`}
             >
